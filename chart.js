@@ -1,13 +1,13 @@
     var order_data = [];
-
+    var getDateString = function(date,type){
+        if(type=='m'){
+            return date.getFullYear().toString()+'-'+(date.getMonth()>8 ? '' : '0') +(date.getMonth()+1).toString();
+        }
+        return date.getFullYear().toString()+'-'+(date.getMonth()+1).toString()+'-'+ (date.getDate()>9 ? '' : '0') + date.getDate().toString();
+    }
 
     var process = function () {
-        var getDateString = function(date,type){
-            if(type=='m'){
-                return date.getFullYear().toString()+'-'+(date.getMonth()>8 ? '' : '0') +(date.getMonth()+1).toString();
-            }
-            return date.getFullYear().toString()+'-'+(date.getMonth()+1).toString()+'-'+ (date.getDate()>9 ? '' : '0') + date.getDate().toString();
-        }
+        
         var n=[],forChartData=[]
         var _init = function(){
             $("#orderSearchTableNodata").remove();
@@ -515,11 +515,30 @@
                 chart: {
                     type: 'variablepie'
                 },
+                title:{
+                    text:'每月熱門商品'
+                },
+                subtitle:{
+                    text:'圖高-銷售數量；圖寬及%-銷售總額'
+                },
                 tooltip: {
                     headerFormat: '',
                     pointFormat: '<span style="color:{point.color}">\u25CF</span> <b> {point.name}</b><br/>' +
                         '總銷售額: <b>{point.y}</b><br/>' +
                         '總數: <b>{point.z}</b><br/>'
+                },
+                credits: {
+                    enabled: false
+                },
+                plotOptions: {
+                    variablepie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                            enabled: true,
+                            format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+                        }
+                    }
                 },
                 series: [{
                     minPointSize: 10,
@@ -539,22 +558,84 @@
             ShowSelectHotItem:_showHot
         }
     }();
-    $.getScript('https://code.highcharts.com/highcharts.js',function(){
-        $.getScript('https://code.highcharts.com/modules/variable-pie.js',function(){
-            $(document).ajaxSend(function (t, e, n) {
-                e.done(function (t) {
-                    if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
-                        process.init();
-                        process.initToUI();
+    
+    var sellerordersearch = function(){
+
+        var _init = function(){
+            $.getScript('https://code.highcharts.com/highcharts.js',function(){
+                $.getScript('https://code.highcharts.com/modules/variable-pie.js',function(){
+                    Highcharts.setOptions({
+                        lang: {
+                        thousandsSep: ','
                     }
+                    })
+                    $(document).ajaxSend(function (t, e, n) {
+                        e.done(function (t) {
+                            if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                                //$('table tr:gt(0):lt(100)').hide();
+                                process.init();
+                                process.initToUI();
+                                $('#landingPage').hide();
+                            }
+                            //$('table tr:gt(0):lt(100)').hide();
+                            $("html, body").animate({
+                                scrollTop: $(document).height()
+                            },1)
+                        })
+                    });
                     $("html, body").animate({
                         scrollTop: $(document).height()
-                    }, 10)
-                })
+                    }, 1);
+                });
             });
-            $("html, body").animate({
-                scrollTop: $(document).height()
-            }, 10);
-        });
-    });
-       
+        }
+
+        return {
+            landing:function(){
+                $('body').append(`<div id='landingPage' style='top: 130px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+                    <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
+                    <div class='day' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業積</div>
+                    <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業積</div>
+                </div>`);
+                $('#landingPage .btnClose').on('click',function(){
+                    $('#landingPage').hide();
+                });
+                $('#landingPage .day').on('click',function(){
+                    $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
+                    setTimeout(_init,50);
+                });
+                $('#landingPage .month').on('click',function(){
+                    //$("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
+                    $("#searchDateS").datepicker("update", getDateString(new Date(),'m')+'-01').trigger('changeDate');
+                    setTimeout(_init,50);
+                });
+            }
+
+        }
+    }();
+    var sellercontainer = function(){
+        return {
+            landing:function(){
+            $('body').append(`<div id='landingPage' style='top: 130px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+                <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
+                <div class='download' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>未出貨清單下載</div>
+           
+            </div>`);
+            $('#landingPage .btnClose').on('click',function(){
+                $('#landingPage').hide();
+            });
+            $('#landingPage .download').on('click',function(){
+                var order_data=[];$(document).ajaxSend(function(e,t,o){t.done(function(e){if(order_data=order_data.concat(t.responseJSON.data),!t.responseJSON.nextPage){console.log(t.responseJSON);var o=[["姓名","FB連結","下單社團","商品訂單","付款狀態","商品","數量","價格"]];order_data.forEach(function(e,t){var a=e.user_fb_name,r="https://www.facebook.com/"+e.user_fb_profile_id;e.orders.forEach(function(e){e.order_product_items.forEach(function(t){var n=[];switch(n.push(a),n.push(r),n.push(e.post_snapshot_media_feed_title),n.push(e.post_snapshot_title),e.order_payment_status){case"PAYING":n.push("付款中");break;case"PAID":n.push("已付款");break;case"UNPAID":n.push("未付款")}n.push(t.product_title),n.push(t.product_style_count),n.push(t.product_sale),o.push(n)})})}),function(e,t){for(var o=function(e){for(var t="",o=0;o<e.length;o++){var a=null===e[o]?"":e[o].toString();e[o]instanceof Date&&(a=e[o].toLocaleString());var r=a.replace(/"/g,'""');r.search(/("|,|\n)/g)>=0&&(r='"'+r+'"'),o>0&&(t+=","),t+=r}return t+"\n"},a="",r=0;r<t.length;r++)a+=o(t[r]);var n=new Blob(["\ufeff"+a],{type:"text/csv;charset=utf-8"});if(navigator.msSaveBlob)navigator.msSaveBlob(n,e);else{var s=document.createElement("a");if(void 0!==s.download){var c=URL.createObjectURL(n);s.setAttribute("href",c),s.setAttribute("download",e),s.style.visibility="hidden",document.body.appendChild(s),s.click(),document.body.removeChild(s)}}}("未付款清單_"+(new Date).toLocaleDateString().replace(/\//g,"")+"_"+(new Date).toLocaleTimeString().slice(2,7).replace(":","")+".csv",o)}$("html, body").animate({scrollTop:$(document).height()},10)})}),$("button.active").trigger("click");
+            });
+        }
+
+    }
+    }();
+    switch(document.URL){
+        case 'https://www.iplusonego.com/seller/sellerordersearch':
+            sellerordersearch.landing();
+        break;
+        case 'https://www.iplusonego.com/seller/sellercontainer':
+            sellercontainer.landing();
+            break;
+    }
