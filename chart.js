@@ -140,15 +140,11 @@
                 else{
                     store_sale.push( {name: data.itemLabel,code:data.itemCode,y: data.sum, z: 1}); 
                 }
-                // var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
-                // var _dateIndex = monthStringList.indexOf(data.monthString);
-                // if(_ownerIndex>=0 && _dateIndex>=0){
-                //     store_sale[_ownerIndex].data[_dateIndex] += data.sum;
-                // }
-               
             })
-
-
+            store_sale.sort(function (a, b) {
+                return b.z - a.z
+              });
+            store_sale = store_sale.slice(0,10); 
             UIControl.ShowSelectHotItem(store_sale);
         }
         var _initToUI = function(){
