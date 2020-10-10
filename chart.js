@@ -23,18 +23,29 @@
                     $(document).ajaxSend(function (t, e, n) {
                         e.done(function (t) {
                             if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                                //去除重複object
+                                order_data = [...new Set(order_data.map(order=>{return JSON.stringify(order)}))];
+                                order_data = order_data.map(order=>{return JSON.parse(order)});
+                                //
+
                                 data_process.init();
                                 data_process.initToUI();
                                 $('#landingPage').hide();
                             }
+                            $('table tr:gt(0):lt(100)').remove();
                             $("html, body").animate({
                                 scrollTop: $(document).height()
                             },1)
                         })
                     });
-                    $("html, body").animate({
-                        scrollTop: $(document).height()
-                    }, 1);
+                    order_data=[]
+                    $("#searchDateE").trigger('changeDate');
+                    $("#searchDateS").trigger('changeDate');
+                    setTimeout(function(){
+                        $("html, body").animate({
+                            scrollTop: $(document).height()
+                        }, 5);
+                    },3000)
                 });
             });
         }
@@ -47,8 +58,6 @@
                         order_data = [...new Set(order_data.map(order=>{return JSON.stringify(order)}))];
                         order_data = order_data.map(order=>{return JSON.parse(order)});
                         //
-
-
                         data_process.init_Trace(mode,startDate,endDate);
                         // data_process.initToUI();
                         $('#landingPage').hide();
@@ -70,34 +79,23 @@
         var data_process = function () {
             var n=[],forChartData=[]
             var _init = function(){
-                $("#orderSearchTableNodata").remove();
-                n = [
-                    ["訂單序號", "會員名稱", "FB連結", "團名", "訂單名稱", "小計", "確認時間", "分類"]
-                ];
-                $("table tr:not(.hidden)").each(function (t) {
-                    if (0 != t) {
-                        var e = [];
-                        e.push($(this).find("td:eq(0)").text()), e.push($(this).find("td:eq(1) a").text()), e.push($(this).find("td:eq(1) a").attr("href")), e.push($(this).find("td:eq(2) div.inline-block").text()), e.push($(this).next().find('td div span[render-text="text"]').map(function () {
-                            return $(this).text()
-                        }).get().join("\n")), e.push($(this).find("td:eq(3)").text()), e.push($(this).find("td:eq(5)").text()), e.push($(this).next().find('td div span[render-text="text"]').map(function () {
-                            return $(this).text().substr(0, 1)
-                        }).get().join("").substr(0, 1)), n.push(e)
-                    }
-                });
+           
                 forChartData = [];
-                n.slice(1).forEach(order => {
-                    var _date = new Date(order[6]);
+                order_data.forEach(order=>{
+                    var _date = new Date(order.order_checked_time);
                     forChartData.push({
                         date:_date,
                         hourString: _date.getHours(),
                         dateString:getDateString(_date),
                         monthString:getDateString(_date,'m'),
-                        storeOwner:order[7],
-                        item:order[3],
-                        sum: order[5].replace(',', '') * 1,
-                        user:order[1]
+                        storeOwner:order.order_product_items[0].product_title.substr(0,1),
+                        item:order.post_snapshot_title,
+                        sum: order.order_total_price*1,
+                        user:order.user_fb_name
                     })
-                });
+
+                })
+                document.forChartData = forChartData;
             }
             var _showSingleDay = function(dataList,dateString,storeOwnerList){
                 var store_sale = new Array(storeOwnerList.length).fill(0);
@@ -136,8 +134,8 @@
                 dataList.filter(data=>{return data.dateString == dateString}).forEach(data=>{
                     var _index = storeOwnerList.indexOf(data.storeOwner);
                     if(_index>=0){
-                        store_sale[_index].data[data.hourString-1] += data.sum;
-                        store_order[_index].data[data.hourString-1] += 1;
+                        store_sale[_index].data[data.hourString] += data.sum;
+                        store_order[_index].data[data.hourString] += 1;
                     }
                 })
                 UIControl.showSelectDayPerHour(dateString,store_sale.concat(store_order));
@@ -439,7 +437,7 @@
                     data_process.refreshUI($("#showSingle").val());
                 })
                 $('#btnClose').on('click',function(){
-                    $("#adv").hide()
+                    $("#adv").hide();
                 });
     
                 $('input[name="owner"]').on('change',function(){
@@ -893,54 +891,42 @@
             landing:function(){
                 $('body').append(`<div id='landingPage' style='top: 250px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
                     <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
-                    <div class='day' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業積</div>
+                    <div class='day' style='width: 150px;height: 150px;display: inline-block;display:none;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業積</div>
                     <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業積</div>
                     <div class='traceLastMonth'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(上月)</div>
                     <div class='traceHistory'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(歷史)</div>
                 </div>`);
                 $('#landingPage .btnClose').on('click',function(){
-                    $('#landingPage').hide();
+                    $('#landingPage').show().hide();
                 });
                 $('#landingPage .day').on('click',function(){
                     $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
                     setTimeout(_init,50);
                 });
                 $('#landingPage .month').on('click',function(){
-                    //$("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
-                    $("#searchDateS").datepicker("update", getDateString(new Date(),'m')+'-01').trigger('changeDate');
-                    setTimeout(_init,50);
+                    $("#searchDateE").datepicker("update", new Date());
+                    $("#searchDateS").datepicker("update", getDateString(new Date(),'m')+'-01');
+                    _init();
                 });
                 $('#landingPage .traceLastMonth').on('click',function(){
                     var lastMonthStartDate = new Date();
                     lastMonthStartDate.setDate(1);
                     lastMonthStartDate.setMonth(lastMonthStartDate.getMonth()-1);
                     var lastMonthEndDate =  new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-                    setTimeout(function(){$("#searchDateE").datepicker("update", getDateString(lastMonthEndDate)).trigger('changeDate')},0);
-                    setTimeout(function(){$("#searchDateS").datepicker("update", getDateString(lastMonthStartDate)).trigger('changeDate')},1000);
-                    setTimeout(function(){_init_trace('traceLastMonth',lastMonthStartDate,lastMonthEndDate)},4000);
+                    $("#searchDateE").datepicker("update", getDateString(lastMonthEndDate));
+                    $("#searchDateS").datepicker("update", getDateString(lastMonthStartDate));;
+                    _init_trace('traceLastMonth',lastMonthStartDate,lastMonthEndDate);
                 });
                 $('#landingPage .traceHistory').on('click',function(){
                     var lastMonthStartDate = new Date();
                     lastMonthStartDate.setDate(1);
                     lastMonthStartDate.setMonth(lastMonthStartDate.getMonth()-1);
 
-                    $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));//.trigger('changeDate');
-                    $("#searchDateS").datepicker("update", getDateString(new Date('2020-08-20')));//.trigger('changeDate');
-
-                    ///目前時間設定在Trace前，所以訂單不一致
-                    //需先設定ajaxSend
-                    //再設定時間
+                    $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
+                    $("#searchDateS").datepicker("update", getDateString(new Date('2020-7-09')));
+                
                     _init_trace('traceHistory',new Date('2020-07-09'),lastMonthStartDate);
-
-
-                    // setTimeout(function(){$("#searchDateE").datepicker("update", getDateString(lastMonthStartDate)).trigger('changeDate')},0);
-                    // setTimeout(function(){$("#searchDateS").datepicker("update", getDateString(new Date('2020-08-20'))).trigger('changeDate')},1000);
-
-                    // ///目前時間設定在Trace前，所以訂單不一致
-                    // //需先設定ajaxSend
-                    // //再設定時間
-                    // setTimeout(function(){_init_trace('traceHistory',new Date('2020-07-09'),lastMonthStartDate)},4000);
-                });
+u                });
 
             },
             getDataProcess:function(){
