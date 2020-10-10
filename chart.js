@@ -10,7 +10,7 @@
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-
+    
     var sellerordersearch = function(){
         var _init = function(){
             $.getScript('https://code.highcharts.com/highcharts.js',function(){
@@ -82,7 +82,7 @@
            
                 forChartData = [];
                 order_data.forEach(order=>{
-                    var _date = new Date(order.order_checked_time);
+                    var _date = new Date(order.order_checked_time+' UTC');
                     forChartData.push({
                         date:_date,
                         hourString: _date.getHours(),
@@ -204,7 +204,55 @@
                   });
                 store_sale = store_sale.slice(0,10); 
                 UIControl.ShowSelectHotItem(store_sale);
-            }
+            };
+            var _showReport = function(dataList,dateString,storeOwnerList){
+              
+                var store_single = new Array(4).fill().map(o=>({label:'',sum:0}));
+                var store_month = new Array(5).fill().map(o=>({label:'',sum:0}));
+                
+                store_single[0].label = "("+dateString+")";
+                store_single[1].label = '媽媽裸績';
+                store_single[2].label = '二店裸績';
+                store_single[3].label = '小黑裸績';
+               
+                store_month[0].label = "("+dateString.substr(0,dateString.length-3)+"月累積)";
+                store_month[1].label = '媽媽裸績';
+                store_month[2].label = '二店裸績';
+                store_month[3].label = '小黑裸績';
+                store_month[4].label = '全部心血';
+                
+                dataList.forEach(data=>{
+                    var _ownerIndex = -1;
+                    switch(data.storeOwner){
+                        case 'V':
+                        case 'C':
+                        case 'L':
+                            _ownerIndex = 1;
+                            break;
+                        case 'P':
+                            _ownerIndex = 2;
+                            break;
+                        case 'H':
+                            _ownerIndex = 3;
+                            break;
+                        case 'B':
+                        case '特':
+                            break;
+                    }
+                    if(_ownerIndex>=0){
+                        //當日
+                        if(data.dateString==dateString){
+                            store_single[_ownerIndex].sum+=data.sum;
+                        }
+                        //累積當月至當日
+                        if(data.dateString<=dateString){
+                            store_month[_ownerIndex].sum+=data.sum;
+                            store_month[4].sum+=data.sum;
+                        }
+                    }
+                });
+                UIControl.ShowSelectReport(store_single,store_month);
+            };
             var _initToUI = function(){
                 UIControl.init();
                 var selectedObj = _getSelectObj();
@@ -258,6 +306,8 @@
                     case '_showHotItem':
                         _showHot(forChartData,selectedObj.MonthList,selectedObj.Owner);
                         break;
+                    case '_showReport':
+                        _showReport(forChartData,selectedObj.Day,selectedObj.Owner);
                     case '':
                         break;
                 }
@@ -404,6 +454,9 @@
                     <li class="nav-item">
                         <a class="nav-link" name='_showHotItem' data-toggle="pill" href="#pills-hot" role="tab">當月熱門</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" name='_showReport' data-toggle="pill" href="#pills-report" role="tab">回報資訊</a>
+                    </li>
                 </ul>
                 <div class="tab-content" style='margin-top:10px;'>
                     <div class="tab-pane  show active" id="pills-singleDay"  role="tabpanel" >
@@ -420,6 +473,11 @@
                     </div>
                     <div class="tab-pane" id="pills-hot" role="tabpanel">
                         <div id='hot_item_container'></div>
+                    </div>
+                    <div class="tab-pane" id="pills-report" role="tabpanel">
+                        記得勾選全部<br/>
+                        選擇日期為回報當天、並累積至當日<br/><br/><br/>
+                        <textarea id='reportDiv' style='width:300px;height:250px'></textarea>
                     </div>
                 </div>
                 </div>`)
@@ -690,6 +748,46 @@
                     }]
                 });
             }
+            var _showReport = function(single_data,month_data){
+      
+                var htmlString =  single_data[0].label+' \n';
+                single_data.forEach((data,index)=>{
+                    if(index!=0){
+                        htmlString+=data.label+toCurrency(data.sum).padStart(14,' ')+' \n';
+                    }
+                })
+                htmlString +='\n'+ month_data[0].label+'\n';
+                month_data.forEach((data,index)=>{
+                    if(index!=0){
+                        htmlString+=data.label+toCurrency(data.sum).padStart(14,' ')+' \n';
+                    }
+                })
+                $('#reportDiv').html(htmlString);
+                // $('#reportDiv table').css('width','150px')
+                // $('#reportDiv table td:nth-child(1)').css('width','50px')
+                // $('#reportDiv table td:nth-child(2)').css({'text-align':'right','width':'50px'});
+
+                // var htmlString = '';
+                // single_data.forEach((data,index)=>{
+                //     if(index!=0){
+                //         htmlString+=`<tr><td>${data.label}</td><td>${toCurrency(data.sum)}</td></tr>`
+                //     }
+                // })
+                // htmlString = single_data[0].label +'<table>'+htmlString+'</table>'
+                // htmlString +='</br>';
+                // var htmlString2 = '';
+                // month_data.forEach((data,index)=>{
+                //     if(index!=0){
+                //         htmlString2+=`<tr><td>${data.label}</td><td>${toCurrency(data.sum)}</td></tr>`
+                //     }
+                // })
+                // htmlString2 = month_data[0].label +'<table>'+htmlString2+'</table>'
+                // $('#reportDiv').html(htmlString+htmlString2);
+                // $('#reportDiv table').css('width','150px')
+                // $('#reportDiv table td:nth-child(1)').css('width','50px')
+                // $('#reportDiv table td:nth-child(2)').css({'text-align':'right','width':'50px'});
+
+            }
             var _init_trace = function(mode,dataList){
                
                 var htmlString = `<div id='adv' style='top: 130px;left: 50px;height: 520px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
@@ -854,7 +952,7 @@
                             <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
                             <td>${data.post_snapshot_title}</td>
                             <td>${toCurrency(data.order_total_price)}</td>
-                            <td>${data.order_checked_time}</td>
+                            <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
                         </tr>`
                         // htmlString +=data.order_payment_status
                         // htmlString +=data.order_status
@@ -884,15 +982,16 @@
                 showSelectPerDay:_showPerDay,
                 ShowSelectPerMonth:_showPerMonth,
                 ShowSelectHotItem:_showHot,
-                initTrace:_init_trace,
+                ShowSelectReport:_showReport,
+                initTrace:_init_trace
             }
         }();
         return {
             landing:function(){
                 $('body').append(`<div id='landingPage' style='top: 250px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
                     <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
-                    <div class='day' style='width: 150px;height: 150px;display: inline-block;display:none;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業積</div>
-                    <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業積</div>
+                    <div class='day' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業績</div>
+                    <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業績</div>
                     <div class='traceLastMonth'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(上月)</div>
                     <div class='traceHistory'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(歷史)</div>
                 </div>`);
