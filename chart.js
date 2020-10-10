@@ -722,7 +722,7 @@
                             <td></td>
                         </tr>
                         <tr>
-                            <td style='padding-left:190px'>已付款</td>
+                            <td style='padding-left:100px'>已付款</td>
                             <td>@order_paid.count</td>
                             <td>@order_paid.sum</td>
                             <td>@order_paid.per</td>
