@@ -221,7 +221,7 @@
                 store_month[3].label = '小黑裸績';
                 store_month[4].label = '全部心血';
                 
-                dataList.forEach(data=>{
+                dataList.filter(data=>storeOwnerList.indexOf(data.storeOwner)>=0).forEach(data=>{
                     var _ownerIndex = -1;
                     switch(data.storeOwner){
                         case 'V':
