@@ -10,48 +10,65 @@
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-    
     var sellerordersearch = function(){
-        var _init = function(){
-            $.getScript('https://code.highcharts.com/highcharts.js',function(){
-                $.getScript('https://code.highcharts.com/modules/variable-pie.js',function(){
-                    Highcharts.setOptions({
-                        lang: {
-                        thousandsSep: ','
+        var isInit = false;
+        var _loading = function(){
+            $(document).off('ajaxSend').on('ajaxSend',function (t, e, n) {
+                e.done(function (t) {
+                    if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                        //去除重複object
+                        order_data = [...new Set(order_data.map(order=>{return JSON.stringify(order)}))];
+                        order_data = order_data.map(order=>{return JSON.parse(order)});
+                        //
+                        console.log('init call')
+                        data_process.init();
+                        data_process.initToUI();
+                        $('#landingPage').hide();
                     }
-                    })
-                    $(document).ajaxSend(function (t, e, n) {
-                        e.done(function (t) {
-                            if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
-                                //去除重複object
-                                order_data = [...new Set(order_data.map(order=>{return JSON.stringify(order)}))];
-                                order_data = order_data.map(order=>{return JSON.parse(order)});
-                                //
-
-                                data_process.init();
-                                data_process.initToUI();
-                                $('#landingPage').hide();
-                            }
-                            $('table tr:gt(0):lt(100)').remove();
-                            $("html, body").animate({
-                                scrollTop: $(document).height()
-                            },1)
-                        })
-                    });
-                    order_data=[]
-                    $("#searchDateE").trigger('changeDate');
-                    $("#searchDateS").trigger('changeDate');
-                    setTimeout(function(){
-                        $("html, body").animate({
-                            scrollTop: $(document).height()
-                        }, 5);
-                    },3000)
-                });
+                    if($('table tr').length>200){
+                        $('table tr:gt(0):lt(100)').remove();
+                    }
+                    $("html, body").animate({
+                        scrollTop: $(document).height()
+                    },1)
+                })
             });
+            order_data=[]
+            $("#searchDateE").trigger('changeDate');
+            $("#searchDateS").trigger('changeDate');
+            $("html, body").animate({
+                scrollTop: 0
+            }, 5);
+            setTimeout(function(){
+                $("html, body").animate({
+                    scrollTop: $(document).height()
+                }, 5);
+            },3000)
+        }
+        var _init = function(){
+            if(!isInit){
+                $.getScript('https://code.highcharts.com/highcharts.js',function(){
+                    $.getScript('https://code.highcharts.com/modules/variable-pie.js',function(){
+                        Highcharts.setOptions({
+                            lang: {
+                                thousandsSep: ','
+                            }
+                        });
+                        _loading();
+                        isInit = true;
+                    });
+                });
+            }
+            else{
+                console.log('_init call loading')
+                _loading();
+            }
+          
         }
         var _init_trace = function(mode,startDate,endDate){
-            $(document).ajaxSend(function (t, e, n) {
+            $(document).off('ajaxSend').on('ajaxSend',function (t, e, n) {
                 e.done(function (t) {
+                    console.log('_init_trace')
                     if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
 
                         //去除重複object
@@ -62,14 +79,20 @@
                         // data_process.initToUI();
                         $('#landingPage').hide();
                     }
-                    $('table tr:gt(0):lt(100)').remove();
+                    if($('table tr').length>200){
+                        $('table tr:gt(0):lt(100)').remove();
+                    }
                     $("html, body").animate({
                         scrollTop: $(document).height()
                     },5)
                 })
             });
+            order_data = [];
             $("#searchDateE").trigger('changeDate');
             $("#searchDateS").trigger('changeDate');
+            $("html, body").animate({
+                scrollTop: 0
+            }, 5);
             setTimeout(function(){
                 $("html, body").animate({
                     scrollTop: $(document).height()
@@ -413,17 +436,13 @@
             }
         }();
         var UIControl = function(){
-            var _isInit = false;
             var _init = function(){
-                if(_isInit){
-                    $("#adv").show();
-                    return
-                };
             
                 $("body").append(`<div id='adv' style='top: 130px;left: 50px;height: 500px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+                <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
                 <ul class="nav">
                     <li style='vertical-align: middle;line-height: 30px;'>
-                        <button id='btnClose' style='right:0px;margin-right: 10px;'>關閉</button> 選擇其他天：<input id='showSingle' type='text' style='width:90px' ></input>
+                        選擇其他天：<input id='showSingle' type='text' style='width:90px' ></input>
                     </li>
                     <li>
                         <div>
@@ -494,8 +513,9 @@
                 $('#adv a[data-toggle="pill"]').on('shown.bs.tab',function(){
                     data_process.refreshUI($("#showSingle").val());
                 })
-                $('#btnClose').on('click',function(){
-                    $("#adv").hide();
+                $('#adv .btnBack').on('click',function(){
+                    $('#adv').remove();
+                    $('#landingPage').show();
                 });
     
                 $('input[name="owner"]').on('change',function(){
@@ -511,8 +531,6 @@
                     }
                     data_process.refreshUI($("#showSingle").val());
                 });
-                
-                _isInit = true;
             };
             var _showSingleDay = function(dateString,storeOwnerList,store_sale,store_order,store_uu){
                 Highcharts.chart('day_container', {
@@ -791,6 +809,7 @@
             var _init_trace = function(mode,dataList){
                
                 var htmlString = `<div id='adv' style='top: 130px;left: 50px;height: 520px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+                <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
                 <div class='byStatus' style='display:inline-block;vertical-align:top;'>
                     <table style='font-size:20px'>
                         <tr>
@@ -896,6 +915,7 @@
                                 <td><a func='' name='all'>另開視窗</a></td>
                             </tr>
                         </table>
+                      
                 </div>
                 </div>`;
                 var keys = Object.keys(dataList);
@@ -915,6 +935,13 @@
                 $(".byStatus tr td:nth-child(4)").css({'text-align':'right','width':'100px'});
                 $(".byStatus tr td:nth-child(5)").css({'text-align':'right','width':'100px'});
                 $('tr').css('border-bottom','1px solid black');
+                $('td a').css('cursor','pointer');
+                
+                //Close
+                $('#adv .btnBack').on('click',function(){
+                    $('#adv').remove();
+                    $('#landingPage').show();
+                });
 
                 //確認清單-事件
                 $('.byStatus table a').on('click',function(){
@@ -989,7 +1016,8 @@
         return {
             landing:function(){
                 $('body').append(`<div id='landingPage' style='top: 250px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                    <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
+                    <button class='btnClose' style='right: 80px;position: fixed'>關閉</button> 
+                
                     <div class='day' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業績</div>
                     <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業績</div>
                     <div class='traceLastMonth'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(上月)</div>
@@ -1000,7 +1028,8 @@
                 });
                 $('#landingPage .day').on('click',function(){
                     $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
-                    setTimeout(_init,50);
+                    $("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
+                    _init();
                 });
                 $('#landingPage .month').on('click',function(){
                     $("#searchDateE").datepicker("update", new Date());
