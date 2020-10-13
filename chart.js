@@ -1,229 +1,303 @@
-    var order_data = [];
-    var getDateString = function(date,type){
-        if(type=='m'){
-            return date.getFullYear().toString()+'-'+(date.getMonth()>8 ? '' : '0') +(date.getMonth()+1).toString();
+    function getDateString(date, type) {
+        if (type == 'm') {
+            return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0') + (date.getMonth() + 1).toString();
         }
-        return date.getFullYear().toString()+'-'+(date.getMonth()+1).toString()+'-'+ (date.getDate()>9 ? '' : '0') + date.getDate().toString();
+        return date.getFullYear().toString() + '-' + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
-    function toCurrency(num){
+    function toCurrency(num) {
         var parts = num.toString().split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-    
-    var sellerordersearch = function(){
-        var _init = function(){
-            $.getScript('https://code.highcharts.com/highcharts.js',function(){
-                $.getScript('https://code.highcharts.com/modules/variable-pie.js',function(){
+    //var rawUrl = 'http://127.0.0.1:5500/'
+    var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/main/';
+    var ajaxObject = {
+        thisMonthSale: null,
+        traceLastMonth: null,
+        traceHistory: null
+    };
+    var isForceReload = false;
+    var order_data = [];
+    var sellerordersearch = function () {
+        var _loadingScript = function () {
+            $.getScript('https://code.highcharts.com/highcharts.js', e => {
+                $.getScript('https://code.highcharts.com/modules/variable-pie.js', e => {
                     Highcharts.setOptions({
                         lang: {
-                        thousandsSep: ','
-                    }
-                    })
-                    $(document).ajaxSend(function (t, e, n) {
-                        e.done(function (t) {
-                            if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
-                                //去除重複object
-                                order_data = [...new Set(order_data.map(order=>{return JSON.stringify(order)}))];
-                                order_data = order_data.map(order=>{return JSON.parse(order)});
-                                //
-
-                                data_process.init();
-                                data_process.initToUI();
-                                $('#landingPage').hide();
-                            }
-                            $('table tr:gt(0):lt(100)').remove();
-                            $("html, body").animate({
-                                scrollTop: $(document).height()
-                            },1)
-                        })
+                            thousandsSep: ','
+                        }
                     });
-                    order_data=[]
-                    $("#searchDateE").trigger('changeDate');
-                    $("#searchDateS").trigger('changeDate');
-                    setTimeout(function(){
-                        $("html, body").animate({
-                            scrollTop: $(document).height()
-                        }, 5);
-                    },3000)
                 });
             });
-        }
-        var _init_trace = function(mode,startDate,endDate){
-            $(document).ajaxSend(function (t, e, n) {
+        }();
+        var _init = function (mode) {
+            if (ajaxObject[mode] && !isForceReload) {
+                order_data = ajaxObject[mode];
+                data_process.init();
+                data_process.initToUI();
+                $('#landingPage').hide();
+                return
+            }
+            $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
-                    if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                    if(order_data = order_data.concat(e.responseJSON.data),!e.responseJSON.nextPage){
+                        
+                        $(document).off('ajaxSend');
 
                         //去除重複object
-                        order_data = [...new Set(order_data.map(order=>{return JSON.stringify(order)}))];
-                        order_data = order_data.map(order=>{return JSON.parse(order)});
+                        order_data = [...new Set(order_data.map(order => {
+                            return JSON.stringify(order)
+                        }))];
+                        order_data = order_data.map(order => {
+                            return JSON.parse(order)
+                        });
                         //
-                        data_process.init_Trace(mode,startDate,endDate);
-                        // data_process.initToUI();
+                        ajaxObject[mode] = $.extend(true, [], order_data);
+                        console.log('init call')
+
+                        data_process.init();
+                        data_process.initToUI();
                         $('#landingPage').hide();
                     }
-                    $('table tr:gt(0):lt(100)').remove();
+                    if ($('table tr').length > 200) {
+                        $('table tr:gt(0):lt(100)').remove();
+                    }
                     $("html, body").animate({
                         scrollTop: $(document).height()
-                    },5)
+                    }, 1)
                 })
             });
+            order_data = []
+            $("html, body").animate({
+                scrollTop: 0
+            }, 1);
             $("#searchDateE").trigger('changeDate');
             $("#searchDateS").trigger('changeDate');
-            setTimeout(function(){
+            setTimeout(function () {
                 $("html, body").animate({
                     scrollTop: $(document).height()
                 }, 5);
-            },3000)
+            }, 3000)
+        }
+        var _init_trace = function (mode, startDate, endDate) {
+            if (ajaxObject[mode] && !isForceReload) {
+                order_data = ajaxObject[mode];
+                data_process.init_Trace(mode, startDate, endDate);
+                $('#landingPage').hide();
+                return;
+            }
+            $(document).on('ajaxSend', function (t, e, n) {
+                e.done(function (t) {
+                    if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                        $(document).off('ajaxSend');
+
+                        //去除重複object
+                        order_data = [...new Set(order_data.map(order => {
+                            return JSON.stringify(order)
+                        }))];
+                        order_data = order_data.map(order => {
+                            return JSON.parse(order)
+                        });
+                        //
+                        ajaxObject[mode] = $.extend(true, [], order_data);
+
+                        data_process.init_Trace(mode, startDate, endDate);
+                        // data_process.initToUI();
+                        $('#landingPage').hide();
+
+                    }
+                    if ($('table tr').length > 200) {
+                        $('table tr:gt(0):lt(100)').remove();
+                    }
+                    $("html, body").animate({
+                        scrollTop: $(document).height()
+                    }, 5)
+                })
+            });
+            order_data = [];
+            $("html, body").animate({
+                scrollTop: 0
+            }, 1);
+            $("#searchDateE").trigger('changeDate');
+            $("#searchDateS").trigger('changeDate');
+            setTimeout(function () {
+                $("html, body").animate({
+                    scrollTop: $(document).height()
+                }, 5);
+            }, 3000)
         };
         var data_process = function () {
-            var n=[],forChartData=[]
-            var _init = function(){
-           
+            var n = [],
+                forChartData = []
+            var _init = function () {
                 forChartData = [];
-                order_data.forEach(order=>{
-                    var _date = new Date(order.order_checked_time+' UTC');
+                order_data.forEach(order => {
+                    var _date = new Date(order.order_checked_time + ' UTC');
                     forChartData.push({
-                        date:_date,
+                        date: _date,
                         hourString: _date.getHours(),
-                        dateString:getDateString(_date),
-                        monthString:getDateString(_date,'m'),
-                        storeOwner:order.order_product_items[0].product_title.substr(0,1),
-                        item:order.post_snapshot_title,
-                        sum: order.order_total_price*1,
-                        user:order.user_fb_name
+                        dateString: getDateString(_date),
+                        monthString: getDateString(_date, 'm'),
+                        storeOwner: order.order_product_items[0].product_title.substr(0, 1),
+                        item: order.post_snapshot_title,
+                        sum: order.order_total_price * 1,
+                        user: order.user_fb_name
                     })
 
                 })
                 document.forChartData = forChartData;
             }
-            var _showSingleDay = function(dataList,dateString,storeOwnerList){
+            var _showSingleDay = function (dataList, dateString, storeOwnerList) {
                 var store_sale = new Array(storeOwnerList.length).fill(0);
                 var store_order = new Array(storeOwnerList.length).fill(0);
-                var store_uu = new Array(storeOwnerList.length).fill().map(u=>([]));
-    
-                dataList.filter(data=>{return data.dateString == dateString}).forEach(data=>{
+                var store_uu = new Array(storeOwnerList.length).fill().map(u => ([]));
+
+                dataList.filter(data => {
+                    return data.dateString == dateString
+                }).forEach(data => {
                     var _index = storeOwnerList.indexOf(data.storeOwner);
-                    if(_index>=0){
+                    if (_index >= 0) {
                         store_sale[_index] += data.sum;
                         store_order[_index] += 1;
                         store_uu[_index].push(data.user);
                     }
                 })
-                store_uu = store_uu.map(data=>{
+                store_uu = store_uu.map(data => {
                     return [...new Set(data)].length;
                 })
-                UIControl.changSelectDay(dateString,storeOwnerList,store_sale,store_order,store_uu);
+                UIControl.changSelectDay(dateString, storeOwnerList, store_sale, store_order, store_uu);
             };
-            var _showPerHour = function (dataList,dateString,storeOwnerList) {
-                
+            var _showPerHour = function (dataList, dateString, storeOwnerList) {
+
                 var store_sale = [];
                 var store_order = [];
-                storeOwnerList.forEach(owner=>{
+                storeOwnerList.forEach(owner => {
                     store_sale.push({
-                        name:owner + '_銷量',
-                        visible:(owner == 'P') ? true : false,
-                        data:new Array(24).fill(0)
+                        name: owner + '_銷量',
+                        visible: (owner == 'P') ? true : false,
+                        data: new Array(24).fill(0)
                     })
                     store_order.push({
-                        name:owner + '_單數',
-                        visible:(owner == 'P') ? true : false,
-                        data:new Array(24).fill(0)
+                        name: owner + '_單數',
+                        visible: (owner == 'P') ? true : false,
+                        data: new Array(24).fill(0)
                     })
                 })
-                dataList.filter(data=>{return data.dateString == dateString}).forEach(data=>{
+                dataList.filter(data => {
+                    return data.dateString == dateString
+                }).forEach(data => {
                     var _index = storeOwnerList.indexOf(data.storeOwner);
-                    if(_index>=0){
+                    if (_index >= 0) {
                         store_sale[_index].data[data.hourString] += data.sum;
                         store_order[_index].data[data.hourString] += 1;
                     }
                 })
-                UIControl.showSelectDayPerHour(dateString,store_sale.concat(store_order));
+                UIControl.showSelectDayPerHour(dateString, store_sale.concat(store_order));
             };
-            var _showPerDay = function(dataList,dayStringList,storeOwnerList){
+            var _showPerDay = function (dataList, dayStringList, storeOwnerList) {
                 var store_sale = [];
-                storeOwnerList.forEach(owner=>{
+                storeOwnerList.forEach(owner => {
                     store_sale.push({
-                        name:owner,
-                        data:new Array(dayStringList.length).fill(0)
+                        name: owner,
+                        data: new Array(dayStringList.length).fill(0)
                     })
                 })
-                dataList.filter(data=>{return dayStringList.indexOf(data.dateString)>=0}).forEach(data=>{
+                dataList.filter(data => {
+                    return dayStringList.indexOf(data.dateString) >= 0
+                }).forEach(data => {
                     var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
                     var _dateIndex = dayStringList.indexOf(data.dateString);
-                    if(_ownerIndex>=0 && _dateIndex>=0){
+                    if (_ownerIndex >= 0 && _dateIndex >= 0) {
                         store_sale[_ownerIndex].data[_dateIndex] += data.sum;
                     }
                 })
-    
-                UIControl.showSelectPerDay(dayStringList,store_sale);
+
+                UIControl.showSelectPerDay(dayStringList, store_sale);
             };
-            var _showPerMonth = function(dataList,monthStringList,storeOwnerList){
+            var _showPerMonth = function (dataList, monthStringList, storeOwnerList) {
                 var store_sale = [];
-                storeOwnerList.forEach(owner=>{
+                storeOwnerList.forEach(owner => {
                     store_sale.push({
-                        name:owner,
-                        data:new Array(monthStringList.length).fill(0)
+                        name: owner,
+                        data: new Array(monthStringList.length).fill(0)
                     })
                 })
-                dataList.filter(data=>{return monthStringList.indexOf(data.monthString)>=0}).forEach(data=>{
+                dataList.filter(data => {
+                    return monthStringList.indexOf(data.monthString) >= 0
+                }).forEach(data => {
                     var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
                     var _dateIndex = monthStringList.indexOf(data.monthString);
-                    if(_ownerIndex>=0 && _dateIndex>=0){
+                    if (_ownerIndex >= 0 && _dateIndex >= 0) {
                         store_sale[_ownerIndex].data[_dateIndex] += data.sum;
                     }
                 })
-                UIControl.ShowSelectPerMonth(monthStringList,store_sale);
+                UIControl.ShowSelectPerMonth(monthStringList, store_sale);
             };
-            var _showHot = function(dataList,monthStringList,storeOwnerList){
+            var _showHot = function (dataList, monthStringList, storeOwnerList) {
                 //內容//總價//總數
-                
+
                 var store_sale = [];
-    
+
                 dataList
-                .filter(data=>{return monthStringList.indexOf(data.monthString)>=0})
-                .filter(data=>{return storeOwnerList.indexOf(data.storeOwner)>=0})
-                .map(data=>{
-                    var list = data.item.split('|')
-                    var name = list[list.length-1].trim();
-                    data.itemCode = name.substr(0,6);
-                    data.itemLabel = name.slice(6);
-                    return data;
-                }).forEach(data=>{
-                    var _itemIndex = store_sale.map(function(e) { return e.code; }).indexOf(data.itemCode);
-                    if(_itemIndex>=0){
-                        store_sale[_itemIndex].y+=data.sum;
-                        store_sale[_itemIndex].z+=1;
-                    }
-                    else{
-                        store_sale.push( {name: data.itemLabel,code:data.itemCode,y: data.sum, z: 1}); 
-                    }
-                })
+                    .filter(data => {
+                        return monthStringList.indexOf(data.monthString) >= 0
+                    })
+                    .filter(data => {
+                        return storeOwnerList.indexOf(data.storeOwner) >= 0
+                    })
+                    .map(data => {
+                        var list = data.item.split('|')
+                        var name = list[list.length - 1].trim();
+                        data.itemCode = name.substr(0, 6);
+                        data.itemLabel = name.slice(6);
+                        return data;
+                    }).forEach(data => {
+                        var _itemIndex = store_sale.map(function (e) {
+                            return e.code;
+                        }).indexOf(data.itemCode);
+                        if (_itemIndex >= 0) {
+                            store_sale[_itemIndex].y += data.sum;
+                            store_sale[_itemIndex].z += 1;
+                        } else {
+                            store_sale.push({
+                                name: data.itemLabel,
+                                code: data.itemCode,
+                                y: data.sum,
+                                z: 1
+                            });
+                        }
+                    })
                 store_sale.sort(function (a, b) {
                     return b.z - a.z
-                  });
-                store_sale = store_sale.slice(0,10); 
+                });
+                store_sale = store_sale.slice(0, 10);
                 UIControl.ShowSelectHotItem(store_sale);
             };
-            var _showReport = function(dataList,dateString,storeOwnerList){
-              
-                var store_single = new Array(4).fill().map(o=>({label:'',sum:0}));
-                var store_month = new Array(5).fill().map(o=>({label:'',sum:0}));
-                
-                store_single[0].label = "("+dateString+")";
+            var _showReport = function (dataList, dateString, storeOwnerList) {
+
+                var store_single = new Array(4).fill().map(o => ({
+                    label: '',
+                    sum: 0
+                }));
+                var store_month = new Array(5).fill().map(o => ({
+                    label: '',
+                    sum: 0
+                }));
+
+                store_single[0].label = "(" + dateString + ")";
                 store_single[1].label = '媽媽裸績';
                 store_single[2].label = '二店裸績';
                 store_single[3].label = '小黑裸績';
-               
-                store_month[0].label = "("+dateString.substr(0,dateString.length-3)+"月累積)";
+
+                store_month[0].label = "(" + dateString.substr(0, dateString.length - 3) + "月累積)";
                 store_month[1].label = '媽媽裸績';
                 store_month[2].label = '二店裸績';
                 store_month[3].label = '小黑裸績';
                 store_month[4].label = '全部心血';
-                
-                dataList.filter(data=>storeOwnerList.indexOf(data.storeOwner)>=0).forEach(data=>{
+
+                dataList.filter(data => storeOwnerList.indexOf(data.storeOwner) >= 0).forEach(data => {
                     var _ownerIndex = -1;
-                    switch(data.storeOwner){
+                    switch (data.storeOwner) {
                         case 'V':
                         case 'C':
                         case 'L':
@@ -239,282 +313,373 @@
                         case '特':
                             break;
                     }
-                    if(_ownerIndex>=0){
+                    if (_ownerIndex >= 0) {
                         //當日
-                        if(data.dateString==dateString){
-                            store_single[_ownerIndex].sum+=data.sum;
+                        if (data.dateString == dateString) {
+                            store_single[_ownerIndex].sum += data.sum;
                         }
                         //累積當月至當日
-                        if(data.dateString<=dateString){
-                            store_month[_ownerIndex].sum+=data.sum;
-                            store_month[4].sum+=data.sum;
+                        if (data.dateString <= dateString) {
+                            store_month[_ownerIndex].sum += data.sum;
+                            store_month[4].sum += data.sum;
                         }
                     }
                 });
-                UIControl.ShowSelectReport(store_single,store_month);
+                UIControl.ShowSelectReport(store_single, store_month);
             };
-            var _initToUI = function(){
+            var _initToUI = function () {
                 UIControl.init();
                 var selectedObj = _getSelectObj();
                 _refreshUI(selectedObj);
             };
-            var _getSelectObj = function(){
+            var _getSelectObj = function () {
                 var selectDaysList = [];
                 var selectMonthsList = [];
                 var startDay = new Date($('#searchDateS').val());
                 var diffDay = Math.abs(new Date($('#searchDateE').val()) - startDay) / (1000 * 60 * 60 * 24) + 1;
-                for(var i=0;i<diffDay;i++){
+                for (var i = 0; i < diffDay; i++) {
                     var newDate = new Date(startDay);
-                    newDate.setDate(newDate.getDate()+i)
+                    newDate.setDate(newDate.getDate() + i)
                     selectDaysList.push(getDateString(newDate));
-                    selectMonthsList.push(getDateString(newDate,'m'));
+                    selectMonthsList.push(getDateString(newDate, 'm'));
                 }
                 selectMonthsList = [...new Set(selectMonthsList)];
-    
+
                 var endDay = new Date($('#searchDateE').val());
                 var selectDay = getDateString(endDay);
-                var selectOwner = $('input[name="owner"]:checked').map(function(){return $(this).val()}).get();
+                var selectOwner = $('input[name="owner"]:checked').map(function () {
+                    return $(this).val()
+                }).get();
                 var selectTab = $('#adv li .active').attr('name');
-    
+
                 var selectedObj = {
-                    Day:selectDay,
-                    Owner:selectOwner,
-                    DayList:selectDaysList,
-                    MonthList:selectMonthsList,
-                    Mode:selectTab
+                    Day: selectDay,
+                    Owner: selectOwner,
+                    DayList: selectDaysList,
+                    MonthList: selectMonthsList,
+                    Mode: selectTab
                 }
                 return selectedObj;
             }
-            var _refreshUI = function(selectedObj){
-                switch(selectedObj.Mode){
+            var _refreshUI = function (selectedObj) {
+                switch (selectedObj.Mode) {
                     case '_showSingleDay':
                         //單日  
-                        _showSingleDay(forChartData,selectedObj.Day,selectedObj.Owner);
+                        _showSingleDay(forChartData, selectedObj.Day, selectedObj.Owner);
                         break;
                     case '_showPerHour':
                         //逐時(單日)   
-                        _showPerHour(forChartData,selectedObj.Day,selectedObj.Owner);
+                        _showPerHour(forChartData, selectedObj.Day, selectedObj.Owner);
                         break;
                     case '_showPerDay':
                         //逐日(單月) 
-                        _showPerDay(forChartData,selectedObj.DayList,selectedObj.Owner);
+                        _showPerDay(forChartData, selectedObj.DayList, selectedObj.Owner);
                         break;
                     case '_showPerMonth':
                         //逐月
-                        _showPerMonth(forChartData,selectedObj.MonthList,selectedObj.Owner);
+                        _showPerMonth(forChartData, selectedObj.MonthList, selectedObj.Owner);
                         break;
                     case '_showHotItem':
-                        _showHot(forChartData,selectedObj.MonthList,selectedObj.Owner);
+                        _showHot(forChartData, selectedObj.MonthList, selectedObj.Owner);
                         break;
                     case '_showReport':
-                        _showReport(forChartData,selectedObj.Day,selectedObj.Owner);
+                        _showReport(forChartData, selectedObj.Day, selectedObj.Owner);
                     case '':
                         break;
                 }
-                
-                
-                
+
+
+
             }
-            var _init_trace = function(mode,startDate,endDate){
-                function createTraceOrder(data,periodOrderAllPrice,addClassifyByPeople){
-                    function getAllPrice(arr){
-                        return (arr.length>0)?arr.map(order=>order.order_total_price*1).reduce((a,b)=>a+b):0;
+            var _init_trace = function (mode, startDate, endDate) {
+                function createTraceOrder(data, periodOrderAllPrice, addClassifyByPeople) {
+                    function getAllPrice(arr) {
+                        return (arr.length > 0) ? arr.map(order => order.order_total_price * 1).reduce((a, b) => a + b) : 0;
                     }
-                    function getClassifyByPeople(arr){
+
+                    function getClassifyByPeople(arr) {
                         var store_sale = [];
                         arr
-                        .forEach(data=>{
-                            var _itemIndex = store_sale.map(function(e) { return e.user_fb_profile_id; }).indexOf(data.user_fb_profile_id);
-                            if(_itemIndex>=0){
-                                store_sale[_itemIndex].sum+=data.order_total_price*1;
-                                store_sale[_itemIndex].count+=1;
-                            }
-                            else{
-                                store_sale.push( {user_fb_name: data.user_fb_name,user_fb_profile_id:data.user_fb_profile_id,sum: data.order_total_price*1,count:1}); 
-                            }
-                        });
+                            .forEach(data => {
+                                var _itemIndex = store_sale.map(function (e) {
+                                    return e.user_fb_profile_id;
+                                }).indexOf(data.user_fb_profile_id);
+                                if (_itemIndex >= 0) {
+                                    store_sale[_itemIndex].sum += data.order_total_price * 1;
+                                    store_sale[_itemIndex].count += 1;
+                                } else {
+                                    store_sale.push({
+                                        user_fb_name: data.user_fb_name,
+                                        user_fb_profile_id: data.user_fb_profile_id,
+                                        sum: data.order_total_price * 1,
+                                        count: 1
+                                    });
+                                }
+                            });
                         store_sale.sort(function (a, b) {
                             return b.sum - a.sum
-                         });
-    
+                        });
+
                         return store_sale;
                     }
                     var returnObj = {
-                        data:data,count:data.length,sum:getAllPrice(data)
+                        data: data,
+                        count: data.length,
+                        sum: getAllPrice(data)
                     };
-                    if(periodOrderAllPrice){
-                        returnObj['per'] = (100*returnObj.sum/periodOrderAllPrice).toFixed(1)
+                    if (periodOrderAllPrice) {
+                        returnObj['per'] = (100 * returnObj.sum / periodOrderAllPrice).toFixed(1)
                     }
-                    if(addClassifyByPeople){
+                    if (addClassifyByPeople) {
                         returnObj['data_people'] = getClassifyByPeople(data);
                     }
                     return returnObj;
                 }
-                function getTraceOrderWithPeriod(data,start,end){
+
+                function getTraceOrderWithPeriod(data, start, end) {
                     var traceOrder = {};
-                    var periodOrder = data;//.filter(order=>{return order.order_checked_time.indexOf(getDateString(start)) && new Date(order.order_checked_time) <end)?true:false}//);
+                    var periodOrder = data; //.filter(order=>{return order.order_checked_time.indexOf(getDateString(start)) && new Date(order.order_checked_time) <end)?true:false}//);
                     traceOrder['order_all'] = createTraceOrder(periodOrder);
 
                     var periodOrderAllPrice = traceOrder['order_all'].sum;
 
-                    var order_finish = periodOrder.filter(order=>{return (order.order_status=='FINISH')? true : false });
-                    traceOrder['order_finish']= createTraceOrder(order_finish,periodOrderAllPrice);
+                    var order_finish = periodOrder.filter(order => {
+                        return (order.order_status == 'FINISH') ? true : false
+                    });
+                    traceOrder['order_finish'] = createTraceOrder(order_finish, periodOrderAllPrice);
 
-                    var order_unfinish = periodOrder.filter(order=>{return (order.order_status=='FINISH')? false : true });
-                    traceOrder['order_unfinish'] = createTraceOrder(order_unfinish,periodOrderAllPrice);
+                    var order_unfinish = periodOrder.filter(order => {
+                        return (order.order_status == 'FINISH') ? false : true
+                    });
+                    traceOrder['order_unfinish'] = createTraceOrder(order_unfinish, periodOrderAllPrice);
 
-                    var order_paid = order_unfinish.filter(order=>{return (order.order_payment_status=='PAID')? true : false });
-                    traceOrder['order_paid']=createTraceOrder(order_paid,periodOrderAllPrice);
-                    
-                    var order_unpaid = order_unfinish.filter(order=>{return (order.order_payment_status=='PAID')? false : true });
-                    traceOrder['order_unpaid']=createTraceOrder(order_unpaid,periodOrderAllPrice,'addPeople');
-                    
-                    var order_container_paid = order_unfinish.filter(order=>{return (order.order_status=='CONTAINER' && order.order_payment_status=='PAID')? true : false });
-                    traceOrder['order_container_paid']=createTraceOrder(order_container_paid,periodOrderAllPrice,'addPeople');
+                    var order_paid = order_unfinish.filter(order => {
+                        return (order.order_payment_status == 'PAID') ? true : false
+                    });
+                    traceOrder['order_paid'] = createTraceOrder(order_paid, periodOrderAllPrice);
 
-                    var order_container_paying = order_unfinish.filter(order=>{return (order.order_status=='CONTAINER' && order.order_payment_status=='PAYING')? true : false });
-                    traceOrder['order_container_paying']=createTraceOrder(order_container_paying,periodOrderAllPrice,'addPeople');
+                    var order_unpaid = order_unfinish.filter(order => {
+                        return (order.order_payment_status == 'PAID') ? false : true
+                    });
+                    traceOrder['order_unpaid'] = createTraceOrder(order_unpaid, periodOrderAllPrice, 'addPeople');
 
-                    var order_container_unpaid = order_unfinish.filter(order=>{return (order.order_status=='CONTAINER' && order.order_payment_status=='UNPAID')? true : false });
-                    traceOrder['order_container_unpaid']=createTraceOrder(order_container_unpaid,periodOrderAllPrice,'addPeople');
+                    var order_container_paid = order_unfinish.filter(order => {
+                        return (order.order_status == 'CONTAINER' && order.order_payment_status == 'PAID') ? true : false
+                    });
+                    traceOrder['order_container_paid'] = createTraceOrder(order_container_paid, periodOrderAllPrice, 'addPeople');
 
-        
+                    var order_container_paying = order_unfinish.filter(order => {
+                        return (order.order_status == 'CONTAINER' && order.order_payment_status == 'PAYING') ? true : false
+                    });
+                    traceOrder['order_container_paying'] = createTraceOrder(order_container_paying, periodOrderAllPrice, 'addPeople');
 
-                    var order_going_paid = order_unfinish.filter(order=>{return (order.order_status=='CHECKED' && order.order_payment_status=='PAID')? true : false });
-                    traceOrder['order_going_paid']=createTraceOrder(order_going_paid,periodOrderAllPrice,'addPeople');
+                    var order_container_unpaid = order_unfinish.filter(order => {
+                        return (order.order_status == 'CONTAINER' && order.order_payment_status == 'UNPAID') ? true : false
+                    });
+                    traceOrder['order_container_unpaid'] = createTraceOrder(order_container_unpaid, periodOrderAllPrice, 'addPeople');
 
-                    var order_going_paying = order_unfinish.filter(order=>{return (order.order_status=='CHECKED' && order.order_payment_status=='PAYING')? true : false })
-                    traceOrder['order_going_paying']=createTraceOrder(order_going_paying,periodOrderAllPrice,'addPeople');
 
-                    var order_going_unpaid = order_unfinish.filter(order=>{return (order.order_status=='CHECKED' && order.order_payment_status=='UNPAID')? true : false });
-                    traceOrder['order_going_unpaid']=createTraceOrder(order_going_unpaid,periodOrderAllPrice,'addPeople');
+
+                    var order_going_paid = order_unfinish.filter(order => {
+                        return (order.order_status == 'CHECKED' && order.order_payment_status == 'PAID') ? true : false
+                    });
+                    traceOrder['order_going_paid'] = createTraceOrder(order_going_paid, periodOrderAllPrice, 'addPeople');
+
+                    var order_going_paying = order_unfinish.filter(order => {
+                        return (order.order_status == 'CHECKED' && order.order_payment_status == 'PAYING') ? true : false
+                    })
+                    traceOrder['order_going_paying'] = createTraceOrder(order_going_paying, periodOrderAllPrice, 'addPeople');
+
+                    var order_going_unpaid = order_unfinish.filter(order => {
+                        return (order.order_status == 'CHECKED' && order.order_payment_status == 'UNPAID') ? true : false
+                    });
+                    traceOrder['order_going_unpaid'] = createTraceOrder(order_going_unpaid, periodOrderAllPrice, 'addPeople');
 
                     return traceOrder;
                 }
-              
-                var data = getTraceOrderWithPeriod(order_data,startDate,endDate);
-                console.log(data)
+
+                var data = getTraceOrderWithPeriod(order_data, startDate, endDate);
                 document.orderTrace = data;
-                UIControl.initTrace(mode,data);
+                UIControl.initTrace(mode, data);
             }
             return {
-                init:_init,
-                initToUI:_initToUI,
-                showSingleDay:_showSingleDay,
-                showPerHour:_showPerHour,
-                showPerDay:_showPerDay,
-                showPerMonth:_showPerMonth,
-                refreshUI:function(selectedDay){
+                init: _init,
+                initToUI: _initToUI,
+                showSingleDay: _showSingleDay,
+                showPerHour: _showPerHour,
+                showPerDay: _showPerDay,
+                showPerMonth: _showPerMonth,
+                refreshUI: function (selectedDay) {
                     var selectedObj = _getSelectObj();
                     selectedObj.Day = selectedDay;
                     _refreshUI(selectedObj);
                 },
-                init_Trace:_init_trace
+                init_Trace: _init_trace
             }
         }();
-        var UIControl = function(){
-            var _isInit = false;
-            var _init = function(){
-                if(_isInit){
-                    $("#adv").show();
-                    return
-                };
-            
-                $("body").append(`<div id='adv' style='top: 130px;left: 50px;height: 500px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                <ul class="nav">
-                    <li style='vertical-align: middle;line-height: 30px;'>
-                        <button id='btnClose' style='right:0px;margin-right: 10px;'>關閉</button> 選擇其他天：<input id='showSingle' type='text' style='width:90px' ></input>
-                    </li>
-                    <li>
-                        <div>
-                            <input name='owner' type="checkbox" value="P" checked>P
-                            <input name='owner' type="checkbox" value="H" checked>H
-                            <input name='owner' type="checkbox" value="C" checked>C
-                            <input name='owner' type="checkbox" value="L">L
-                            <input name='owner' type="checkbox" value="V">V
-                        </div>
-                        <div>
-                        <input name='owner' type="checkbox" value="特">特
-                        <input name='owner' type="checkbox" value="B">B
-                        <input name='owner_all' type="checkbox" value="all">全部
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" name='_showSingleDay' data-toggle="pill" href="#pills-singleDay" role="tab">單日狀況</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" name='_showPerHour' data-toggle="pill" href="#pills-hour" role="tab">逐時狀況</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" name='_showPerDay' data-toggle="pill" href="#pills-day" role="tab">逐日狀況</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" name='_showPerMonth' data-toggle="pill" href="#pills-month" role="tab">逐月狀況</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" name='_showHotItem' data-toggle="pill" href="#pills-hot" role="tab">當月熱門</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" name='_showReport' data-toggle="pill" href="#pills-report" role="tab">回報資訊</a>
-                    </li>
-                </ul>
-                <div class="tab-content" style='margin-top:10px;'>
-                    <div class="tab-pane  show active" id="pills-singleDay"  role="tabpanel" >
-                        <div id='day_container'></div>
-                    </div>
-                    <div class="tab-pane" id="pills-hour" role="tabpanel" >
-                        <div id='per_hour_container'></div>
-                    </div>
-                    <div class="tab-pane" id="pills-day" role="tabpanel">
-                        <div id='per_day_container'></div>
-                    </div>
-                    <div class="tab-pane" id="pills-month" role="tabpanel">
-                        <div id='per_month_container'></div>
-                    </div>
-                    <div class="tab-pane" id="pills-hot" role="tabpanel">
-                        <div id='hot_item_container'></div>
-                    </div>
-                    <div class="tab-pane" id="pills-report" role="tabpanel">
-                        記得勾選全部<br/>
-                        選擇日期為回報當天、並累積至當日<br/><br/><br/>
-                        <textarea id='reportDiv' style='width:300px;height:250px'></textarea>
-                    </div>
-                </div>
-                </div>`)
-                $('#adv input').css({'margin-left':'5px'});
-                $('.tab-pane div').css({'left':'50px','right':'50px'});
-                
-                $("#showSingle").val($('#searchDateE').val());
-                $
-                ("#showSingle").datepicker({
-                    format:'yyyy-mm-dd',
-                }).on('changeDate',function(){
-                    data_process.refreshUI($("#showSingle").val());
-                });
-                $('#adv a[data-toggle="pill"]').on('shown.bs.tab',function(){
-                    data_process.refreshUI($("#showSingle").val());
-                })
-                $('#btnClose').on('click',function(){
-                    $("#adv").hide();
-                });
-    
-                $('input[name="owner"]').on('change',function(){
-                    data_process.refreshUI($("#showSingle").val());
-                });
-                $('input[name="owner_all"]').on('change',function(){
-                    if($(this).prop('checked')){
-                        $('input[name="owner"]').prop('checked',true);
+        var UIControl = function () {
+            var _init = function () {
+                $.ajax({
+                    url: rawUrl + '/ui/sellordersearch/sale/index.html',
+                    async: false
+                }).then(function (data) {
+                    if($('#adv').length==0){
+                        $('body').append(data);
                     }
-                    else{
-                        $('input[name="owner"]').prop('checked',false);
-                        $('input[name="owner"]:lt(3)').prop('checked',true);
-                    }
-                    data_process.refreshUI($("#showSingle").val());
+
+                    $('#adv input').css({
+                        'margin-left': '5px'
+                    });
+                    $('.tab-pane div').css({
+                        'left': '50px',
+                        'right': '50px'
+                    });
+
+                    $("#showSingle").val($('#searchDateE').val());
+                    $
+                        ("#showSingle").datepicker({
+                            format: 'yyyy-mm-dd',
+                        }).on('changeDate', e => {
+                            data_process.refreshUI($("#showSingle").val());
+                        });
+                    $('#adv a[data-toggle="pill"]').on('shown.bs.tab', e => {
+                        data_process.refreshUI($("#showSingle").val());
+                    })
+                    $('#adv .btnBack').on('click', e => {
+                        $('#adv').remove();
+                        $('#landingPage').show();
+                    });
+
+                    $('input[name="owner"]').on('change', e => {
+                        data_process.refreshUI($("#showSingle").val());
+                    });
+                    $('input[name="owner_all"]').on('change', e => {
+                        if ($(this).prop('checked')) {
+                            $('input[name="owner"]').prop('checked', true);
+                        } else {
+                            $('input[name="owner"]').prop('checked', false);
+                            $('input[name="owner"]:lt(3)').prop('checked', true);
+                        }
+                        data_process.refreshUI($("#showSingle").val());
+                    });
                 });
-                
-                _isInit = true;
+
             };
-            var _showSingleDay = function(dateString,storeOwnerList,store_sale,store_order,store_uu){
+            var _init_trace = function (mode, dataList) {
+                $.ajax({
+                    url: rawUrl + '/ui/sellordersearch/trace/index.html',
+                    async: false
+                }).then(function (data) {
+                    var htmlString = data;
+                    var keys = Object.keys(dataList);
+                    keys.forEach(key => {
+                        dataList[key].sum = (dataList[key].sum > 0) ? dataList[key].sum : '-';
+                        dataList[key].count = (dataList[key].count > 0) ? dataList[key].count : '-';
+
+                        htmlString = htmlString
+                            .replace('@' + key + '.sum', toCurrency(dataList[key].sum))
+                            .replace('@' + key + '.per', dataList[key].per + '%')
+                            .replace('@' + key + '.count', toCurrency(dataList[key].count));
+                    });
+                    $("body").append(htmlString);
+                }).then(function () {
+                    $(".byStatus tr td:nth-child(2)").css({
+                        'text-align': 'right',
+                        'width': '80px'
+                    });
+                    $(".byStatus tr td:nth-child(3)").css({
+                        'text-align': 'right',
+                        'width': '90px'
+                    });
+                    $(".byStatus tr td:nth-child(4)").css({
+                        'text-align': 'right',
+                        'width': '80px'
+                    });
+                    $(".byStatus tr td:nth-child(5)").css({
+                        'text-align': 'right',
+                        'width': '80px'
+                    });
+                    $('tr').css('border-bottom', '1px solid black');
+                    $('td a').css('cursor', 'pointer');
+
+                    //Close
+                    $('#adv .btnBack').on('click', e => {
+                        $('#adv').remove();
+                        $('#landingPage').show();
+                    });
+
+                    //確認清單-事件
+                    $(document).on('click', '.byStatus table a', e => {
+                        $('.byPeople table tr:gt(1)').remove();
+
+                        var func = e.currentTarget.name;
+                        $('.byPeople table a').attr('func', func);
+
+                        var htmlString = '';
+                        dataList[func].data_people.forEach(data => {
+                            htmlString += `<tr>
+                                <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
+                                <td>${data.count}</td>
+                                <td>${toCurrency(data.sum)}</td>
+                                <td><a func=${func} name=${data.user_fb_profile_id}>另開</a></td>
+                            </tr>`
+                        });
+                        $('.byPeople table').append(htmlString);
+
+                        $('td a').css('cursor', 'pointer');
+                        $(".byPeople tr td:nth-child(1)").css({
+                            'width': '90px'
+                        });
+                        $(".byPeople tr td:nth-child(2)").css({
+                            'text-align': 'right',
+                            'width': '90px'
+                        });
+                        $(".byPeople tr td:nth-child(3)").css({
+                            'text-align': 'right',
+                            'width': '90px'
+                        });
+                        $(".byPeople tr td:nth-child(4)").css({
+                            'text-align': 'right',
+                            'width': '90px'
+                        });
+                        $('.byPeople').css({
+                            'visibility': ''
+                        });
+                    })
+                    //訂單細節-另開事件
+                    $(document).on('click', '.byPeople table a', e => {
+                        var func = $(e.currentTarget).attr('func');
+                        var fb_id = e.currentTarget.name;
+                        var htmlString = '';
+                        dataList[func].data.filter(data => {
+                            return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
+                        }).forEach(data => {
+                            htmlString += `<tr>
+                                    <td>${data.order_id}</td>
+                                    <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
+                                    <td>${data.post_snapshot_title}</td>
+                                    <td>${toCurrency(data.order_total_price)}</td>
+                                    <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
+                                </tr>`
+                        });
+                        htmlString = `<html><head><title></title></head>
+                            <body>
+                            <table style='font-size:20px'>
+                            <tr>
+                                <td>訂單序號</td>
+                                <td>會員名稱</td>
+                                <td>團名</td>
+                                <td>小計</td>
+                                <td>確認時間</td>
+                            </tr>
+                            ${htmlString}
+                            </table></body></html>`;
+                        var wnd = window.open("about:blank", '', config = 'height=800px,width=1300px');
+                        wnd.document.write(htmlString);
+                    })
+                });
+            };
+            var _showSingleDay = function (dateString, storeOwnerList, store_sale, store_order, store_uu) {
                 Highcharts.chart('day_container', {
                     chart: {
                         type: 'column'
@@ -529,7 +694,7 @@
                         min: 0
                     },
                     legend: {
-                    
+
                         align: 'right',
                         x: -5,
                         verticalAlign: 'top',
@@ -563,7 +728,7 @@
                     }]
                 });
             };
-            var _showPerHour = function(dateString,data){
+            var _showPerHour = function (dateString, data) {
                 Highcharts.chart('per_hour_container', {
                     chart: {
                         type: 'column'
@@ -603,7 +768,7 @@
                     series: data
                 });
             };
-            var _showPerDay = function(dayStringList,data){
+            var _showPerDay = function (dayStringList, data) {
                 Highcharts.chart('per_day_container', {
                     chart: {
                         type: 'column'
@@ -656,7 +821,7 @@
                     series: data
                 });
             };
-            var _showPerMonth = function(monthStringList,data){
+            var _showPerMonth = function (monthStringList, data) {
                 Highcharts.chart('per_month_container', {
                     chart: {
                         type: 'column'
@@ -709,16 +874,16 @@
                     series: data
                 });
             };
-            var _showHot = function(data){
+            var _showHot = function (data) {
                 Highcharts.chart('hot_item_container', {
                     chart: {
                         type: 'variablepie'
                     },
-                    title:{
-                        text:'每月熱門商品'
+                    title: {
+                        text: '每月熱門商品'
                     },
-                    subtitle:{
-                        text:'圖高-銷售數量；圖寬及%-銷售總額'
+                    subtitle: {
+                        text: '圖高-銷售數量；圖寬及%-銷售總額'
                     },
                     tooltip: {
                         headerFormat: '',
@@ -748,316 +913,173 @@
                     }]
                 });
             }
-            var _showReport = function(single_data,month_data){
-      
-                var htmlString =  single_data[0].label+' \n';
-                single_data.forEach((data,index)=>{
-                    if(index!=0){
-                        htmlString+=data.label+toCurrency(data.sum).padStart(14,' ')+' \n';
+            var _showReport = function (single_data, month_data) {
+
+                var htmlString = single_data[0].label + ' \n';
+                single_data.forEach((data, index) => {
+                    if (index != 0) {
+                        htmlString += data.label + toCurrency(data.sum).padStart(14, ' ') + ' \n';
                     }
                 })
-                htmlString +='\n'+ month_data[0].label+'\n';
-                month_data.forEach((data,index)=>{
-                    if(index!=0){
-                        htmlString+=data.label+toCurrency(data.sum).padStart(14,' ')+' \n';
+                htmlString += '\n' + month_data[0].label + '\n';
+                month_data.forEach((data, index) => {
+                    if (index != 0) {
+                        htmlString += data.label + toCurrency(data.sum).padStart(14, ' ') + ' \n';
                     }
                 })
                 $('#reportDiv').html(htmlString);
-                // $('#reportDiv table').css('width','150px')
-                // $('#reportDiv table td:nth-child(1)').css('width','50px')
-                // $('#reportDiv table td:nth-child(2)').css({'text-align':'right','width':'50px'});
-
-                // var htmlString = '';
-                // single_data.forEach((data,index)=>{
-                //     if(index!=0){
-                //         htmlString+=`<tr><td>${data.label}</td><td>${toCurrency(data.sum)}</td></tr>`
-                //     }
-                // })
-                // htmlString = single_data[0].label +'<table>'+htmlString+'</table>'
-                // htmlString +='</br>';
-                // var htmlString2 = '';
-                // month_data.forEach((data,index)=>{
-                //     if(index!=0){
-                //         htmlString2+=`<tr><td>${data.label}</td><td>${toCurrency(data.sum)}</td></tr>`
-                //     }
-                // })
-                // htmlString2 = month_data[0].label +'<table>'+htmlString2+'</table>'
-                // $('#reportDiv').html(htmlString+htmlString2);
-                // $('#reportDiv table').css('width','150px')
-                // $('#reportDiv table td:nth-child(1)').css('width','50px')
-                // $('#reportDiv table td:nth-child(2)').css({'text-align':'right','width':'50px'});
 
             }
-            var _init_trace = function(mode,dataList){
-               
-                var htmlString = `<div id='adv' style='top: 130px;left: 50px;height: 520px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                <div class='byStatus' style='display:inline-block;vertical-align:top;'>
-                    <table style='font-size:20px'>
-                        <tr>
-                            <td>訂單狀態</td>
-                            <td>訂單總數</td>
-                            <td>銷售金額</td>
-                            <td>百分比</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>所有訂單</td><td>@order_all.count</td><td>@order_all.sum</td><td>100.0%</td><td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>已結單</td>
-                            <td>@order_finish.count</td>    
-                            <td>@order_finish.sum</td>
-                            <td>@order_finish.per</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>未完成</td>
-                            <td>@order_unfinish.count</td>
-                            <td>@order_unfinish.sum</td>
-                            <td>@order_unfinish.per</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:100px'>已付款</td>
-                            <td>@order_paid.count</td>
-                            <td>@order_paid.sum</td>
-                            <td>@order_paid.per</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:100px'>未付款</td>
-                            <td>@order_unpaid.count</td>
-                            <td>@order_unpaid.sum</td>
-                            <td>@order_unpaid.per</td>
-                            <td><a name='order_unpaid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='height:15px' colspan='5'>已到貨</td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>已付款(向倉庫確認出貨)</td>
-                            <td>@order_container_paid.count</td>
-                            <td>@order_container_paid.sum</td>
-                            <td></td>
-                            <td><a name='order_container_paid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>付款中(向客戶催款)</td>
-                            <td>@order_container_paying.count</td>
-                            <td>@order_container_paying.sum</td>
-                            <td></td>
-                            <td><a name='order_container_paying'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>未付款(轉付款單)</td>
-                            <td>@order_container_unpaid.count</td>
-                            <td>@order_container_unpaid.sum</td>
-                            <td></td>
-                            <td><a name='order_container_unpaid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='height:15px' colspan='5'>未到貨</td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>已付款(需掌握訂貨狀況)</td>
-                            <td>@order_going_paid.count</td>
-                            <td>@order_going_paid.sum</td>
-                            <td></td>
-                            <td><a name='order_going_paid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>付款中(可轉黑名單)</td>
-                            <td>@order_going_paying.count</td>
-                            <td>@order_going_paying.sum</td>
-                            <td></td>
-                            <td><a name='order_going_paying'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>未付款(可轉黑名單)</td>
-                            <td>@order_going_unpaid.count</td>
-                            <td>@order_going_unpaid.sum</td>
-                            <td></td>
-                            <td><a name='order_going_unpaid'>確認清單</a></td>
-                        </tr>
-                    </table>
-                </div>
-                <div style='display:inline-block;height:470px;overflow-y:auto;visibility:hidden;vertical-align:top;margin-left:100px' class='byPeople'>
-                    <table style='font-size:20px'>
-                            <tr>
-                                <td>使用者</td>
-                                <td>訂單數</td>
-                                <td>總金額</td>
-                                <td>訂單明細</td>
-                            </tr>
-                            <tr>
-                                <td>所有人</td>
-                                <td></td>
-                                <td></td>
-                                <td><a func='' name='all'>另開視窗</a></td>
-                            </tr>
-                        </table>
-                </div>
-                </div>`;
-                var keys = Object.keys(dataList);
-                keys.forEach(key=>{
-                    dataList[key].sum = (dataList[key].sum>0)?dataList[key].sum:'-';
-                    dataList[key].count = (dataList[key].count>0)?dataList[key].count:'-';
 
-                    htmlString = htmlString
-                        .replace('@'+key+'.sum',toCurrency(dataList[key].sum))
-                        .replace('@'+key+'.per',dataList[key].per+'%')
-                        .replace('@'+key+'.count',toCurrency(dataList[key].count));
-                });
-                 $("body").append(htmlString);
-
-                $(".byStatus tr td:nth-child(2)").css({'text-align':'right','width':'100px'});
-                $(".byStatus tr td:nth-child(3)").css({'text-align':'right','width':'100px'});
-                $(".byStatus tr td:nth-child(4)").css({'text-align':'right','width':'100px'});
-                $(".byStatus tr td:nth-child(5)").css({'text-align':'right','width':'100px'});
-                $('tr').css('border-bottom','1px solid black');
-
-                //確認清單-事件
-                $('.byStatus table a').on('click',function(){
-                    $('.byPeople table tr:gt(1)').remove();
-
-                    var func = $(this).attr('name');
-                    $('.byPeople table a').attr('func',func);
-              
-                    var htmlString = '';
-                    dataList[func].data_people.forEach(data=>{
-                        htmlString +=`<tr>
-                            <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                            <td>${data.count}</td>
-                            <td>${toCurrency(data.sum)}</td>
-                            <td><a func=${func} name=${data.user_fb_profile_id}>另開</a></td>
-                        </tr>`
-                    });
-                    $('.byPeople table').append(htmlString);
-
-                    $('td a').css('cursor','pointer');
-                    $(".byPeople tr td:nth-child(1)").css({'width':'150px'});
-                    $(".byPeople tr td:nth-child(2)").css({'text-align':'right','width':'100px'});
-                    $(".byPeople tr td:nth-child(3)").css({'text-align':'right','width':'100px'});
-                    $(".byPeople tr td:nth-child(4)").css({'text-align':'right','width':'100px'});
-                    $('.byPeople').css({'visibility':''});
-                })
-                //訂單細節-另開事件
-                $(document).on('click','.byPeople table a',function(){
-                    var func = $(this).attr('func');
-                    var fb_id = $(this).attr('name');
-                    var htmlString = '';
-                    dataList[func].data.filter(data=>{return (data.user_fb_profile_id==fb_id || fb_id=='all')?true:false}).forEach(data=>{
-                        htmlString +=`<tr>
-                            <td>${data.order_id}</td>
-                            <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                            <td>${data.post_snapshot_title}</td>
-                            <td>${toCurrency(data.order_total_price)}</td>
-                            <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
-                        </tr>`
-                        // htmlString +=data.order_payment_status
-                        // htmlString +=data.order_status
-                    });
-                    //${$(this).parent().parent().find('td:eq(0)').text()}
-                    htmlString =  `<html><head><title></title></head>
-                    <body>
-                    <table style='font-size:20px'>
-                    <tr>
-                        <td>訂單序號</td>
-                        <td>會員名稱</td>
-                        <td>團名</td>
-                        <td>小計</td>
-                        <td>確認時間</td>
-                    </tr>
-                    ${htmlString}
-                    </table></body></html>`;
-                    var wnd = window.open("about:blank",'', config='height=800px,width=1300px');
-                    wnd.document.write(htmlString);
-                })
-
-            };
             return {
-                init:_init,
-                changSelectDay:_showSingleDay,
-                showSelectDayPerHour:_showPerHour,
-                showSelectPerDay:_showPerDay,
-                ShowSelectPerMonth:_showPerMonth,
-                ShowSelectHotItem:_showHot,
-                ShowSelectReport:_showReport,
-                initTrace:_init_trace
+                init: _init,
+                initTrace: _init_trace,
+                changSelectDay: _showSingleDay,
+                showSelectDayPerHour: _showPerHour,
+                showSelectPerDay: _showPerDay,
+                ShowSelectPerMonth: _showPerMonth,
+                ShowSelectHotItem: _showHot,
+                ShowSelectReport: _showReport
             }
         }();
         return {
-            landing:function(){
-                $('body').append(`<div id='landingPage' style='top: 250px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                    <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
-                    <div class='day' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業績</div>
-                    <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業績</div>
-                    <div class='traceLastMonth'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(上月)</div>
-                    <div class='traceHistory'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(歷史)</div>
-                </div>`);
-                $('#landingPage .btnClose').on('click',function(){
-                    $('#landingPage').show().hide();
-                });
-                $('#landingPage .day').on('click',function(){
-                    $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
-                    setTimeout(_init,50);
-                });
-                $('#landingPage .month').on('click',function(){
-                    $("#searchDateE").datepicker("update", new Date());
-                    $("#searchDateS").datepicker("update", getDateString(new Date(),'m')+'-01');
-                    _init();
-                });
-                $('#landingPage .traceLastMonth').on('click',function(){
-                    var lastMonthStartDate = new Date();
-                    lastMonthStartDate.setDate(1);
-                    lastMonthStartDate.setMonth(lastMonthStartDate.getMonth()-1);
-                    var lastMonthEndDate =  new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-                    $("#searchDateE").datepicker("update", getDateString(lastMonthEndDate));
-                    $("#searchDateS").datepicker("update", getDateString(lastMonthStartDate));;
-                    _init_trace('traceLastMonth',lastMonthStartDate,lastMonthEndDate);
-                });
-                $('#landingPage .traceHistory').on('click',function(){
-                    var lastMonthStartDate = new Date();
-                    lastMonthStartDate.setDate(1);
-                    lastMonthStartDate.setMonth(lastMonthStartDate.getMonth()-1);
+            landing: function () {
+                $.ajax({
+                    url: rawUrl + 'ui/sellordersearch/landing.html',
+                    async: false
+                }).then(function (data) {
+                    $('body').append(data);
+                }).then(function () {
+                    $('#landingPage .forceReload').on('click', e => {
+                        if( $('#landingPage .forceReload').is(':checked')){
+                            isForceReload = true;
+                       } else {
+                            isForceReload = false;
+                       }
+                    })
+                    $('#landingPage .btnClose').on('click', e => {
+                        $('#landingPage').show().hide();
+                    });
+                    $('#landingPage .day').on('click', e => {
+                        $("#searchDateE").datepicker("update", new Date());
+                        $("#searchDateS").datepicker("update", new Date());
+                        _init('day');
+                    });
+                    $('#landingPage .month').on('click', e => {
+                        $("#searchDateE").datepicker("update", new Date());
+                        $("#searchDateS").datepicker("update", getDateString(new Date(), 'm') + '-01');
+                        _init('thisMonthSale');
+                    });
+                    $('#landingPage .traceLastMonth').on('click', e => {
+                        var lastMonthStartDate = new Date();
+                        lastMonthStartDate.setDate(1);
+                        lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
+                        var lastMonthEndDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+                        $("#searchDateE").datepicker("update", getDateString(lastMonthEndDate));
+                        $("#searchDateS").datepicker("update", getDateString(lastMonthStartDate));;
+                        _init_trace('traceLastMonth', lastMonthStartDate, lastMonthEndDate);
+                    });
+                    $('#landingPage .traceHistory').on('click', e => {
+                        var lastMonthStartDate = new Date();
+                        lastMonthStartDate.setDate(1);
+                        lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
 
-                    $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
-                    $("#searchDateS").datepicker("update", getDateString(new Date('2020-7-09')));
-                
-                    _init_trace('traceHistory',new Date('2020-07-09'),lastMonthStartDate);
-u                });
+                        $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
+                        var _date = new Date('2020-8-28');
+                        //var _date = new Date('2020-7-09');
+                        
+                        $("#searchDateS").datepicker("update", getDateString(_date));
+
+                        _init_trace('traceHistory', _date, lastMonthStartDate);
+                    });
+
+                });
 
             },
-            getDataProcess:function(){
+            getDataProcess: function () {
                 return data_process;
             },
-            getUIControl:function(){
+            getUIControl: function () {
                 return UIControl;
             }
         }
     }();
-    var sellercontainer = function(){
+    var sellercontainer = function () {
         return {
-            landing:function(){
+            landing: function () {
                 $('body').append(`<div id='landingPage' style='top: 130px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
                     <button class='btnClose' style='right:0px;margin-right: 10px;vertical-align:top'>關閉</button> 
                     <div class='download' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>未出貨清單下載</div>
             
                 </div>`);
-                $('#landingPage .btnClose').on('click',function(){
+                $('#landingPage .btnClose').on('click', e => {
                     $('#landingPage').hide();
                 });
-                $('#landingPage .download').on('click',function(){
-                    var order_data=[];$(document).ajaxSend(function(e,t,o){t.done(function(e){if(order_data=order_data.concat(t.responseJSON.data),!t.responseJSON.nextPage){console.log(t.responseJSON);var o=[["姓名","FB連結","下單社團","商品訂單","付款狀態","商品","數量","價格"]];order_data.forEach(function(e,t){var a=e.user_fb_name,r="https://www.facebook.com/"+e.user_fb_profile_id;e.orders.forEach(function(e){e.order_product_items.forEach(function(t){var n=[];switch(n.push(a),n.push(r),n.push(e.post_snapshot_media_feed_title),n.push(e.post_snapshot_title),e.order_payment_status){case"PAYING":n.push("付款中");break;case"PAID":n.push("已付款");break;case"UNPAID":n.push("未付款")}n.push(t.product_title),n.push(t.product_style_count),n.push(t.product_sale),o.push(n)})})}),function(e,t){for(var o=function(e){for(var t="",o=0;o<e.length;o++){var a=null===e[o]?"":e[o].toString();e[o]instanceof Date&&(a=e[o].toLocaleString());var r=a.replace(/"/g,'""');r.search(/("|,|\n)/g)>=0&&(r='"'+r+'"'),o>0&&(t+=","),t+=r}return t+"\n"},a="",r=0;r<t.length;r++)a+=o(t[r]);var n=new Blob(["\ufeff"+a],{type:"text/csv;charset=utf-8"});if(navigator.msSaveBlob)navigator.msSaveBlob(n,e);else{var s=document.createElement("a");if(void 0!==s.download){var c=URL.createObjectURL(n);s.setAttribute("href",c),s.setAttribute("download",e),s.style.visibility="hidden",document.body.appendChild(s),s.click(),document.body.removeChild(s)}}}("未付款清單_"+(new Date).toLocaleDateString().replace(/\//g,"")+"_"+(new Date).toLocaleTimeString().slice(2,7).replace(":","")+".csv",o)}$("html, body").animate({scrollTop:$(document).height()},10)})}),$("button.active").trigger("click");
+                $('#landingPage .download').on('click', e => {
+                    var order_data = [];
+                    $(document).ajaxSend(function (e, t, o) {
+                        t.done(function (e) {
+                            if (order_data = order_data.concat(t.responseJSON.data), !t.responseJSON.nextPage) {
+                                var o = [
+                                    ["姓名", "FB連結", "下單社團", "商品訂單", "付款狀態", "商品", "數量", "價格"]
+                                ];
+                                order_data.forEach(function (e, t) {
+                                        var a = e.user_fb_name,
+                                            r = "https://www.facebook.com/" + e.user_fb_profile_id;
+                                        e.orders.forEach(function (e) {
+                                            e.order_product_items.forEach(function (t) {
+                                                var n = [];
+                                                switch (n.push(a), n.push(r), n.push(e.post_snapshot_media_feed_title), n.push(e.post_snapshot_title), e.order_payment_status) {
+                                                    case "PAYING":
+                                                        n.push("付款中");
+                                                        break;
+                                                    case "PAID":
+                                                        n.push("已付款");
+                                                        break;
+                                                    case "UNPAID":
+                                                        n.push("未付款")
+                                                }
+                                                n.push(t.product_title), n.push(t.product_style_count), n.push(t.product_sale), o.push(n)
+                                            })
+                                        })
+                                    }),
+                                    function (e, t) {
+                                        for (var o = function (e) {
+                                                for (var t = "", o = 0; o < e.length; o++) {
+                                                    var a = null === e[o] ? "" : e[o].toString();
+                                                    e[o] instanceof Date && (a = e[o].toLocaleString());
+                                                    var r = a.replace(/"/g, '""');
+                                                    r.search(/("|,|\n)/g) >= 0 && (r = '"' + r + '"'), o > 0 && (t += ","), t += r
+                                                }
+                                                return t + "\n"
+                                            }, a = "", r = 0; r < t.length; r++) a += o(t[r]);
+                                        var n = new Blob(["\ufeff" + a], {
+                                            type: "text/csv;charset=utf-8"
+                                        });
+                                        if (navigator.msSaveBlob) navigator.msSaveBlob(n, e);
+                                        else {
+                                            var s = document.createElement("a");
+                                            if (void 0 !== s.download) {
+                                                var c = URL.createObjectURL(n);
+                                                s.setAttribute("href", c), s.setAttribute("download", e), s.style.visibility = "hidden", document.body.appendChild(s), s.click(), document.body.removeChild(s)
+                                            }
+                                        }
+                                    }("未付款清單_" + (new Date).toLocaleDateString().replace(/\//g, "") + "_" + (new Date).toLocaleTimeString().slice(2, 7).replace(":", "") + ".csv", o)
+                            }
+                            $("html, body").animate({
+                                scrollTop: $(document).height()
+                            }, 10)
+                        })
+                    }), $("button.active").trigger("click");
                 });
             }
         }
     }();
-    switch(document.URL){
+    switch (document.URL) {
         case 'https://www.iplusonego.com/seller/sellerordersearch':
             sellerordersearch.landing();
-        break;
+            break;
         case 'https://www.iplusonego.com/seller/sellercontainer':
             sellercontainer.landing();
-        break;
+            break;
     }

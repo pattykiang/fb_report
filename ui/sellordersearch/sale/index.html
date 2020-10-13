@@ -1,0 +1,64 @@
+<div id='adv'
+    style='top: 130px;left: 50px;height: 500px;right: 50px;position: fixed;z-index: 99;background: #f1f4f5;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+    <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
+    <ul class="nav">
+        <li style='vertical-align: middle;line-height: 30px;'>
+            選擇其他天：<input id='showSingle' type='text' style='width:90px'></input>
+        </li>
+        <li>
+            <div>
+                <input name='owner' type="checkbox" value="P" checked>P
+                <input name='owner' type="checkbox" value="H" checked>H
+                <input name='owner' type="checkbox" value="C" checked>C
+                <input name='owner' type="checkbox" value="L">L
+                <input name='owner' type="checkbox" value="V">V
+            </div>
+            <div>
+                <input name='owner' type="checkbox" value="特">特
+                <input name='owner' type="checkbox" value="B">B
+                <input name='owner_all' type="checkbox" value="all">全部
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" name='_showSingleDay' data-toggle="pill" href="#pills-singleDay"
+                role="tab">單日狀況</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" name='_showPerHour' data-toggle="pill" href="#pills-hour" role="tab">逐時狀況</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" name='_showPerDay' data-toggle="pill" href="#pills-day" role="tab">逐日狀況</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" name='_showPerMonth' data-toggle="pill" href="#pills-month" role="tab">逐月狀況</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" name='_showHotItem' data-toggle="pill" href="#pills-hot" role="tab">當月熱門</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" name='_showReport' data-toggle="pill" href="#pills-report" role="tab">回報資訊</a>
+        </li>
+    </ul>
+    <div class="tab-content" style='margin-top:10px;'>
+        <div class="tab-pane  show active" id="pills-singleDay" role="tabpanel">
+            <div id='day_container'></div>
+        </div>
+        <div class="tab-pane" id="pills-hour" role="tabpanel">
+            <div id='per_hour_container'></div>
+        </div>
+        <div class="tab-pane" id="pills-day" role="tabpanel">
+            <div id='per_day_container'></div>
+        </div>
+        <div class="tab-pane" id="pills-month" role="tabpanel">
+            <div id='per_month_container'></div>
+        </div>
+        <div class="tab-pane" id="pills-hot" role="tabpanel">
+            <div id='hot_item_container'></div>
+        </div>
+        <div class="tab-pane" id="pills-report" role="tabpanel">
+            記得勾選全部<br />
+            選擇日期為回報當天、並累積至當日<br /><br /><br />
+            <textarea id='reportDiv' style='width:300px;height:250px'></textarea>
+        </div>
+    </div>
+</div>
