@@ -946,7 +946,7 @@
         return {
             landing: function () {
                 $.ajax({
-                    url: rawUrl + 'ui/sellordersearch/index.html',
+                    url: rawUrl + 'ui/sellordersearch/landing.html',
                     async: false
                 }).then(function (data) {
                     $('body').append(data);
