@@ -985,8 +985,8 @@
                         lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
 
                         $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
-                        var _date = new Date('2020-8-28');
-                        //var _date = new Date('2020-7-09');
+                        // var _date = new Date('2020-8-28');
+                        var _date = new Date('2020-7-09');
                         
                         $("#searchDateS").datepicker("update", getDateString(_date));
 
