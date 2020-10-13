@@ -10,14 +10,20 @@
         return parts.join('.');
     }
     //var rawUrl = 'http://127.0.0.1:5500/'
-    var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/main/';
-    var ajaxObject = {
-        thisMonthSale: null,
-        traceLastMonth: null,
-        traceHistory: null
-    };
-    var isForceReload = false;
-    var order_data = [];
+    
+   
+    var extendData = {
+        rawUrl : (document.rawUrl)? document.rawUrl:'https://raw.githubusercontent.com/pattykiang/fb_report/main/',
+        ajaxObject : {
+            thisMonthSale: null,
+            traceLastMonth: null,
+            traceHistory: null
+        },
+        isForceReload : false,
+        order_data : []
+    }
+    document.extendData = extendData;
+
     var sellerordersearch = function () {
         var _loadingScript = function () {
             $.getScript('https://code.highcharts.com/highcharts.js', e => {
@@ -31,8 +37,8 @@
             });
         }();
         var _init = function (mode) {
-            if (ajaxObject[mode] && !isForceReload) {
-                order_data = ajaxObject[mode];
+            if (extendData.ajaxObject[mode] && !extendData.isForceReload) {
+                extendData.order_data = extendData.ajaxObject[mode];
                 data_process.init();
                 data_process.initToUI();
                 $('#landingPage').hide();
@@ -40,19 +46,19 @@
             }
             $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
-                    if(order_data = order_data.concat(e.responseJSON.data),!e.responseJSON.nextPage){
+                    if(extendData.order_data = extendData.order_data.concat(e.responseJSON.data),!e.responseJSON.nextPage){
                         
                         $(document).off('ajaxSend');
 
                         //去除重複object
-                        order_data = [...new Set(order_data.map(order => {
+                        extendData.order_data = [...new Set(extendData.order_data.map(order => {
                             return JSON.stringify(order)
                         }))];
-                        order_data = order_data.map(order => {
+                        extendData.order_data = extendData.order_data.map(order => {
                             return JSON.parse(order)
                         });
                         //
-                        ajaxObject[mode] = $.extend(true, [], order_data);
+                        extendData.ajaxObject[mode] = $.extend(true, [], extendData.order_data);
                         console.log('init call')
 
                         data_process.init();
@@ -67,7 +73,7 @@
                     }, 1)
                 })
             });
-            order_data = []
+            extendData.order_data = []
             $("html, body").animate({
                 scrollTop: 0
             }, 1);
@@ -80,26 +86,26 @@
             }, 3000)
         }
         var _init_trace = function (mode, startDate, endDate) {
-            if (ajaxObject[mode] && !isForceReload) {
-                order_data = ajaxObject[mode];
+            if (extendData.ajaxObject[mode] && !extendData.isForceReload) {
+                extendData.order_data = extendData.ajaxObject[mode];
                 data_process.init_Trace(mode, startDate, endDate);
                 $('#landingPage').hide();
                 return;
             }
             $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
-                    if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                    if (extendData.order_data = extendData.order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
                         $(document).off('ajaxSend');
 
                         //去除重複object
-                        order_data = [...new Set(order_data.map(order => {
+                        extendData.order_data = [...new Set(extendData.order_data.map(order => {
                             return JSON.stringify(order)
                         }))];
-                        order_data = order_data.map(order => {
+                        extendData.order_data = extendData.order_data.map(order => {
                             return JSON.parse(order)
                         });
                         //
-                        ajaxObject[mode] = $.extend(true, [], order_data);
+                        extendData.ajaxObject[mode] = $.extend(true, [], extendData.order_data);
 
                         data_process.init_Trace(mode, startDate, endDate);
                         // data_process.initToUI();
@@ -114,7 +120,7 @@
                     }, 5)
                 })
             });
-            order_data = [];
+            extendData.order_data = [];
             $("html, body").animate({
                 scrollTop: 0
             }, 1);
@@ -131,7 +137,7 @@
                 forChartData = []
             var _init = function () {
                 forChartData = [];
-                order_data.forEach(order => {
+                extendData.order_data.forEach(order => {
                     var _date = new Date(order.order_checked_time + ' UTC');
                     forChartData.push({
                         date: _date,
@@ -498,7 +504,7 @@
                     return traceOrder;
                 }
 
-                var data = getTraceOrderWithPeriod(order_data, startDate, endDate);
+                var data = getTraceOrderWithPeriod(extendData.order_data, startDate, endDate);
                 document.orderTrace = data;
                 UIControl.initTrace(mode, data);
             }
@@ -520,8 +526,8 @@
         var UIControl = function () {
             var _init = function () {
                 $.ajax({
-                    url: rawUrl + '/ui/sellordersearch/sale/index.html',
-                    async: false
+                    url: extendData.rawUrl + '/ui/sellordersearch/sale/index.html',
+                    async: false,cache:false
                 }).then(function (data) {
                     if($('#adv').length==0){
                         $('body').append(data);
@@ -567,8 +573,8 @@
             };
             var _init_trace = function (mode, dataList) {
                 $.ajax({
-                    url: rawUrl + '/ui/sellordersearch/trace/index.html',
-                    async: false
+                    url: extendData.rawUrl + '/ui/sellordersearch/trace/index.html',
+                    async: false,cache:false
                 }).then(function (data) {
                     var htmlString = data;
                     var keys = Object.keys(dataList);
@@ -945,16 +951,16 @@
         return {
             landing: function () {
                 $.ajax({
-                    url: rawUrl + 'ui/sellordersearch/landing.html',
-                    async: false
+                    url: extendData.rawUrl + 'ui/sellordersearch/landing.html',
+                    async: false,cache:false
                 }).then(function (data) {
                     $('body').append(data);
                 }).then(function () {
                     $('#landingPage .forceReload').on('click', e => {
                         if( $('#landingPage .forceReload').is(':checked')){
-                            isForceReload = true;
+                            extendData.isForceReload = true;
                        } else {
-                            isForceReload = false;
+                            extendData.isForceReload = false;
                        }
                     })
                     $('#landingPage .btnClose').on('click', e => {
@@ -980,17 +986,15 @@
                         _init_trace('traceLastMonth', lastMonthStartDate, lastMonthEndDate);
                     });
                     $('#landingPage .traceHistory').on('click', e => {
-                        var lastMonthStartDate = new Date();
-                        lastMonthStartDate.setDate(1);
-                        lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
-
-                        $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
+                        var _endDate = new Date();
+                        _endDate.setMonth(_endDate.getMonth() - 1);
+                        _endDate.setDate(0);
+                        $("#searchDateE").datepicker("update", getDateString(_endDate));
                         // var _date = new Date('2020-8-28');
-                        var _date = new Date('2020-7-09');
-                        
-                        $("#searchDateS").datepicker("update", getDateString(_date));
 
-                        _init_trace('traceHistory', _date, lastMonthStartDate);
+                        var _date = new Date('2020-7-09');
+                        $("#searchDateS").datepicker("update", getDateString(_date));
+                        _init_trace('traceHistory', _date, _endDate);
                     });
 
                 });
@@ -1016,14 +1020,14 @@
                     $('#landingPage').hide();
                 });
                 $('#landingPage .download').on('click', e => {
-                    var order_data = [];
+                    extendData.order_data = [];
                     $(document).ajaxSend(function (e, t, o) {
                         t.done(function (e) {
-                            if (order_data = order_data.concat(t.responseJSON.data), !t.responseJSON.nextPage) {
+                            if (extendData.order_data = extendData.order_data.concat(t.responseJSON.data), !t.responseJSON.nextPage) {
                                 var o = [
                                     ["姓名", "FB連結", "下單社團", "商品訂單", "付款狀態", "商品", "數量", "價格"]
                                 ];
-                                order_data.forEach(function (e, t) {
+                                extendData.order_data.forEach(function (e, t) {
                                         var a = e.user_fb_name,
                                             r = "https://www.facebook.com/" + e.user_fb_profile_id;
                                         e.orders.forEach(function (e) {
