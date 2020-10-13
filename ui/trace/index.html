@@ -1,0 +1,116 @@
+<div id='adv'
+    style='top: 130px;left: 50px;height: 520px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+    <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
+    <div class='byStatus' style='display:inline-block;vertical-align:top;'>
+        <table style='font-size:20px'>
+            <tr>
+                <td>訂單狀態</td>
+                <td>訂單總數</td>
+                <td>銷售金額</td>
+                <td>百分比</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>所有訂單</td>
+                <td>@order_all.count</td>
+                <td>@order_all.sum</td>
+                <td>100.0%</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>已結單</td>
+                <td>@order_finish.count</td>
+                <td>@order_finish.sum</td>
+                <td>@order_finish.per</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>未完成</td>
+                <td>@order_unfinish.count</td>
+                <td>@order_unfinish.sum</td>
+                <td>@order_unfinish.per</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style='padding-left:100px'>已付款</td>
+                <td>@order_paid.count</td>
+                <td>@order_paid.sum</td>
+                <td>@order_paid.per</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style='padding-left:100px'>未付款</td>
+                <td>@order_unpaid.count</td>
+                <td>@order_unpaid.sum</td>
+                <td>@order_unpaid.per</td>
+                <td><a name='order_unpaid'>確認清單</a></td>
+            </tr>
+            <tr>
+                <td style='height:15px' colspan='5'>已到貨</td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>已付款(向倉庫確認出貨)</td>
+                <td>@order_container_paid.count</td>
+                <td>@order_container_paid.sum</td>
+                <td></td>
+                <td><a name='order_container_paid'>確認清單</a></td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>付款中(向客戶催款)</td>
+                <td>@order_container_paying.count</td>
+                <td>@order_container_paying.sum</td>
+                <td></td>
+                <td><a name='order_container_paying'>確認清單</a></td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>未付款(轉付款單)</td>
+                <td>@order_container_unpaid.count</td>
+                <td>@order_container_unpaid.sum</td>
+                <td></td>
+                <td><a name='order_container_unpaid'>確認清單</a></td>
+            </tr>
+            <tr>
+                <td style='height:15px' colspan='5'>未到貨</td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>已付款(需掌握訂貨狀況)</td>
+                <td>@order_going_paid.count</td>
+                <td>@order_going_paid.sum</td>
+                <td></td>
+                <td><a name='order_going_paid'>確認清單</a></td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>付款中(可轉黑名單)</td>
+                <td>@order_going_paying.count</td>
+                <td>@order_going_paying.sum</td>
+                <td></td>
+                <td><a name='order_going_paying'>確認清單</a></td>
+            </tr>
+            <tr>
+                <td style='padding-left:50px'>未付款(可轉黑名單)</td>
+                <td>@order_going_unpaid.count</td>
+                <td>@order_going_unpaid.sum</td>
+                <td></td>
+                <td><a name='order_going_unpaid'>確認清單</a></td>
+            </tr>
+        </table>
+    </div>
+    <div style='display:inline-block;height:470px;overflow-y:auto;visibility:hidden;vertical-align:top;margin-left:100px'
+        class='byPeople'>
+        <table style='font-size:20px'>
+            <tr>
+                <td>使用者</td>
+                <td>訂單數</td>
+                <td>總金額</td>
+                <td>訂單明細</td>
+            </tr>
+            <tr>
+                <td>所有人</td>
+                <td></td>
+                <td></td>
+                <td><a func='' name='all'>另開視窗</a></td>
+            </tr>
+        </table>
+
+    </div>
+</div>

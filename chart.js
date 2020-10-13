@@ -4,19 +4,46 @@
         }
         return date.getFullYear().toString() + '-' + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
+
     function toCurrency(num) {
         var parts = num.toString().split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
     var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/dev/';
+    var ajaxObject = {
+        thisMonthSale: null,
+        traceLastMonth: null,
+        traceHistory: null
+    };
     var order_data = [];
     var sellerordersearch = function () {
-        var isInit = false;
-        var _loading = function () {
-            $(document).off('ajaxSend').on('ajaxSend', function (t, e, n) {
+        var _loadingScript = function () {
+            $.getScript('https://code.highcharts.com/highcharts.js', function () {
+                $.getScript('https://code.highcharts.com/modules/variable-pie.js', function () {
+                    Highcharts.setOptions({
+                        lang: {
+                            thousandsSep: ','
+                        }
+                    });
+                });
+            });
+        }();
+        var _init = function (mode) {
+            debugger
+            console.log('_init call loading')
+            if (ajaxObject[mode]) {
+                order_data = ajaxObject[mode];
+                data_process.init();
+                data_process.initToUI();
+                $('#landingPage').hide();
+                return
+            }
+            $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
                     if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                        $(document).off('ajaxSend');
+
                         //去除重複object
                         order_data = [...new Set(order_data.map(order => {
                             return JSON.stringify(order)
@@ -25,7 +52,9 @@
                             return JSON.parse(order)
                         });
                         //
+                        ajaxObject[mode] = $.extend(true, [], order_data);
                         console.log('init call')
+                     
                         data_process.init();
                         data_process.initToUI();
                         $('#landingPage').hide();
@@ -50,30 +79,17 @@
                 }, 5);
             }, 3000)
         }
-        var _init = function () {
-            if (!isInit) {
-                $.getScript('https://code.highcharts.com/highcharts.js', function () {
-                    $.getScript('https://code.highcharts.com/modules/variable-pie.js', function () {
-                        Highcharts.setOptions({
-                            lang: {
-                                thousandsSep: ','
-                            }
-                        });
-                        _loading();
-                        isInit = true;
-                    });
-                });
-            } else {
-                console.log('_init call loading')
-                _loading();
-            }
-
-        }
         var _init_trace = function (mode, startDate, endDate) {
-            $(document).off('ajaxSend').on('ajaxSend', function (t, e, n) {
+            if (ajaxObject[mode]) {
+                order_data = ajaxObject[mode];
+                data_process.init_Trace(mode, startDate, endDate);
+                $('#landingPage').hide();
+                return;
+            }
+            $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
-                    console.log('_init_trace')
                     if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                        $(document).off('ajaxSend');
 
                         //去除重複object
                         order_data = [...new Set(order_data.map(order => {
@@ -83,9 +99,12 @@
                             return JSON.parse(order)
                         });
                         //
+                        ajaxObject[mode] = $.extend(true, [], order_data);
+
                         data_process.init_Trace(mode, startDate, endDate);
                         // data_process.initToUI();
                         $('#landingPage').hide();
+
                     }
                     if ($('table tr').length > 200) {
                         $('table tr:gt(0):lt(100)').remove();
@@ -111,7 +130,6 @@
             var n = [],
                 forChartData = []
             var _init = function () {
-
                 forChartData = [];
                 order_data.forEach(order => {
                     var _date = new Date(order.order_checked_time + ' UTC');
@@ -481,7 +499,6 @@
                 }
 
                 var data = getTraceOrderWithPeriod(order_data, startDate, endDate);
-                console.log(data)
                 document.orderTrace = data;
                 UIControl.initTrace(mode, data);
             }
@@ -502,70 +519,11 @@
         }();
         var UIControl = function () {
             var _init = function () {
-                $.ajax({url:rawUrl+'/ui/sale/index.html',async:false}).then(function(data){
+                $.ajax({
+                    url: rawUrl + '/ui/sale/index.html',
+                    async: false
+                }).then(function (data) {
                     $('body').append(data);
-                    // $("body").append(`<div id='adv' style='top: 130px;left: 50px;height: 500px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                    // <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
-                    // <ul class="nav">
-                    //     <li style='vertical-align: middle;line-height: 30px;'>
-                    //         選擇其他天：<input id='showSingle' type='text' style='width:90px' ></input>
-                    //     </li>
-                    //     <li>
-                    //         <div>
-                    //             <input name='owner' type="checkbox" value="P" checked>P
-                    //             <input name='owner' type="checkbox" value="H" checked>H
-                    //             <input name='owner' type="checkbox" value="C" checked>C
-                    //             <input name='owner' type="checkbox" value="L">L
-                    //             <input name='owner' type="checkbox" value="V">V
-                    //         </div>
-                    //         <div>
-                    //         <input name='owner' type="checkbox" value="特">特
-                    //         <input name='owner' type="checkbox" value="B">B
-                    //         <input name='owner_all' type="checkbox" value="all">全部
-                    //         </div>
-                    //     </li>
-                    //     <li class="nav-item">
-                    //         <a class="nav-link active" name='_showSingleDay' data-toggle="pill" href="#pills-singleDay" role="tab">單日狀況</a>
-                    //     </li>
-                    //     <li class="nav-item">
-                    //         <a class="nav-link" name='_showPerHour' data-toggle="pill" href="#pills-hour" role="tab">逐時狀況</a>
-                    //     </li>
-                    //     <li class="nav-item">
-                    //         <a class="nav-link" name='_showPerDay' data-toggle="pill" href="#pills-day" role="tab">逐日狀況</a>
-                    //     </li>
-                    //     <li class="nav-item">
-                    //         <a class="nav-link" name='_showPerMonth' data-toggle="pill" href="#pills-month" role="tab">逐月狀況</a>
-                    //     </li>
-                    //     <li class="nav-item">
-                    //         <a class="nav-link" name='_showHotItem' data-toggle="pill" href="#pills-hot" role="tab">當月熱門</a>
-                    //     </li>
-                    //     <li class="nav-item">
-                    //         <a class="nav-link" name='_showReport' data-toggle="pill" href="#pills-report" role="tab">回報資訊</a>
-                    //     </li>
-                    // </ul>
-                    // <div class="tab-content" style='margin-top:10px;'>
-                    //     <div class="tab-pane  show active" id="pills-singleDay"  role="tabpanel" >
-                    //         <div id='day_container'></div>
-                    //     </div>
-                    //     <div class="tab-pane" id="pills-hour" role="tabpanel" >
-                    //         <div id='per_hour_container'></div>
-                    //     </div>
-                    //     <div class="tab-pane" id="pills-day" role="tabpanel">
-                    //         <div id='per_day_container'></div>
-                    //     </div>
-                    //     <div class="tab-pane" id="pills-month" role="tabpanel">
-                    //         <div id='per_month_container'></div>
-                    //     </div>
-                    //     <div class="tab-pane" id="pills-hot" role="tabpanel">
-                    //         <div id='hot_item_container'></div>
-                    //     </div>
-                    //     <div class="tab-pane" id="pills-report" role="tabpanel">
-                    //         記得勾選全部<br/>
-                    //         選擇日期為回報當天、並累積至當日<br/><br/><br/>
-                    //         <textarea id='reportDiv' style='width:300px;height:250px'></textarea>
-                    //     </div>
-                    // </div>
-                    // </div>`)
                     
                     $('#adv input').css({
                         'margin-left': '5px'
@@ -574,7 +532,7 @@
                         'left': '50px',
                         'right': '50px'
                     });
-    
+
                     $("#showSingle").val($('#searchDateE').val());
                     $
                         ("#showSingle").datepicker({
@@ -589,7 +547,7 @@
                         $('#adv').remove();
                         $('#landingPage').show();
                     });
-    
+
                     $('input[name="owner"]').on('change', function () {
                         data_process.refreshUI($("#showSingle").val());
                     });
@@ -603,7 +561,7 @@
                         data_process.refreshUI($("#showSingle").val());
                     });
                 });
-               
+
             };
             var _showSingleDay = function (dateString, storeOwnerList, store_sale, store_order, store_uu) {
                 Highcharts.chart('day_container', {
@@ -854,253 +812,125 @@
                     }
                 })
                 $('#reportDiv').html(htmlString);
-                // $('#reportDiv table').css('width','150px')
-                // $('#reportDiv table td:nth-child(1)').css('width','50px')
-                // $('#reportDiv table td:nth-child(2)').css({'text-align':'right','width':'50px'});
-
-                // var htmlString = '';
-                // single_data.forEach((data,index)=>{
-                //     if(index!=0){
-                //         htmlString+=`<tr><td>${data.label}</td><td>${toCurrency(data.sum)}</td></tr>`
-                //     }
-                // })
-                // htmlString = single_data[0].label +'<table>'+htmlString+'</table>'
-                // htmlString +='</br>';
-                // var htmlString2 = '';
-                // month_data.forEach((data,index)=>{
-                //     if(index!=0){
-                //         htmlString2+=`<tr><td>${data.label}</td><td>${toCurrency(data.sum)}</td></tr>`
-                //     }
-                // })
-                // htmlString2 = month_data[0].label +'<table>'+htmlString2+'</table>'
-                // $('#reportDiv').html(htmlString+htmlString2);
-                // $('#reportDiv table').css('width','150px')
-                // $('#reportDiv table td:nth-child(1)').css('width','50px')
-                // $('#reportDiv table td:nth-child(2)').css({'text-align':'right','width':'50px'});
 
             }
             var _init_trace = function (mode, dataList) {
-
-                var htmlString = `<div id='adv' style='top: 130px;left: 50px;height: 520px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
-                <div class='byStatus' style='display:inline-block;vertical-align:top;'>
-                    <table style='font-size:20px'>
-                        <tr>
-                            <td>訂單狀態</td>
-                            <td>訂單總數</td>
-                            <td>銷售金額</td>
-                            <td>百分比</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>所有訂單</td><td>@order_all.count</td><td>@order_all.sum</td><td>100.0%</td><td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>已結單</td>
-                            <td>@order_finish.count</td>    
-                            <td>@order_finish.sum</td>
-                            <td>@order_finish.per</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>未完成</td>
-                            <td>@order_unfinish.count</td>
-                            <td>@order_unfinish.sum</td>
-                            <td>@order_unfinish.per</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:100px'>已付款</td>
-                            <td>@order_paid.count</td>
-                            <td>@order_paid.sum</td>
-                            <td>@order_paid.per</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:100px'>未付款</td>
-                            <td>@order_unpaid.count</td>
-                            <td>@order_unpaid.sum</td>
-                            <td>@order_unpaid.per</td>
-                            <td><a name='order_unpaid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='height:15px' colspan='5'>已到貨</td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>已付款(向倉庫確認出貨)</td>
-                            <td>@order_container_paid.count</td>
-                            <td>@order_container_paid.sum</td>
-                            <td></td>
-                            <td><a name='order_container_paid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>付款中(向客戶催款)</td>
-                            <td>@order_container_paying.count</td>
-                            <td>@order_container_paying.sum</td>
-                            <td></td>
-                            <td><a name='order_container_paying'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>未付款(轉付款單)</td>
-                            <td>@order_container_unpaid.count</td>
-                            <td>@order_container_unpaid.sum</td>
-                            <td></td>
-                            <td><a name='order_container_unpaid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='height:15px' colspan='5'>未到貨</td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>已付款(需掌握訂貨狀況)</td>
-                            <td>@order_going_paid.count</td>
-                            <td>@order_going_paid.sum</td>
-                            <td></td>
-                            <td><a name='order_going_paid'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>付款中(可轉黑名單)</td>
-                            <td>@order_going_paying.count</td>
-                            <td>@order_going_paying.sum</td>
-                            <td></td>
-                            <td><a name='order_going_paying'>確認清單</a></td>
-                        </tr>
-                        <tr>
-                            <td style='padding-left:50px'>未付款(可轉黑名單)</td>
-                            <td>@order_going_unpaid.count</td>
-                            <td>@order_going_unpaid.sum</td>
-                            <td></td>
-                            <td><a name='order_going_unpaid'>確認清單</a></td>
-                        </tr>
-                    </table>
-                </div>
-                <div style='display:inline-block;height:470px;overflow-y:auto;visibility:hidden;vertical-align:top;margin-left:100px' class='byPeople'>
-                    <table style='font-size:20px'>
-                            <tr>
-                                <td>使用者</td>
-                                <td>訂單數</td>
-                                <td>總金額</td>
-                                <td>訂單明細</td>
-                            </tr>
-                            <tr>
-                                <td>所有人</td>
-                                <td></td>
-                                <td></td>
-                                <td><a func='' name='all'>另開視窗</a></td>
-                            </tr>
-                        </table>
-                      
-                </div>
-                </div>`;
-                var keys = Object.keys(dataList);
-                keys.forEach(key => {
-                    dataList[key].sum = (dataList[key].sum > 0) ? dataList[key].sum : '-';
-                    dataList[key].count = (dataList[key].count > 0) ? dataList[key].count : '-';
-
-                    htmlString = htmlString
-                        .replace('@' + key + '.sum', toCurrency(dataList[key].sum))
-                        .replace('@' + key + '.per', dataList[key].per + '%')
-                        .replace('@' + key + '.count', toCurrency(dataList[key].count));
-                });
-                $("body").append(htmlString);
-
-                $(".byStatus tr td:nth-child(2)").css({
-                    'text-align': 'right',
-                    'width': '100px'
-                });
-                $(".byStatus tr td:nth-child(3)").css({
-                    'text-align': 'right',
-                    'width': '100px'
-                });
-                $(".byStatus tr td:nth-child(4)").css({
-                    'text-align': 'right',
-                    'width': '100px'
-                });
-                $(".byStatus tr td:nth-child(5)").css({
-                    'text-align': 'right',
-                    'width': '100px'
-                });
-                $('tr').css('border-bottom', '1px solid black');
-                $('td a').css('cursor', 'pointer');
-
-                //Close
-                $('#adv .btnBack').on('click', function () {
-                    $('#adv').remove();
-                    $('#landingPage').show();
-                });
-
-                //確認清單-事件
-                $('.byStatus table a').on('click', function () {
-                    $('.byPeople table tr:gt(1)').remove();
-
-                    var func = $(this).attr('name');
-                    $('.byPeople table a').attr('func', func);
-
-                    var htmlString = '';
-                    dataList[func].data_people.forEach(data => {
-                        htmlString += `<tr>
-                            <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                            <td>${data.count}</td>
-                            <td>${toCurrency(data.sum)}</td>
-                            <td><a func=${func} name=${data.user_fb_profile_id}>另開</a></td>
-                        </tr>`
+                $.ajax({
+                    url: rawUrl + '/ui/trace/index.html',
+                    async: false
+                }).then(function (data) {
+                    var htmlString = data;
+                    var keys = Object.keys(dataList);
+                    keys.forEach(key => {
+                        dataList[key].sum = (dataList[key].sum > 0) ? dataList[key].sum : '-';
+                        dataList[key].count = (dataList[key].count > 0) ? dataList[key].count : '-';
+    
+                        htmlString = htmlString
+                            .replace('@' + key + '.sum', toCurrency(dataList[key].sum))
+                            .replace('@' + key + '.per', dataList[key].per + '%')
+                            .replace('@' + key + '.count', toCurrency(dataList[key].count));
                     });
-                    $('.byPeople table').append(htmlString);
+                    $("body").append(htmlString);
 
+
+                    $(".byStatus tr td:nth-child(2)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $(".byStatus tr td:nth-child(3)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $(".byStatus tr td:nth-child(4)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $(".byStatus tr td:nth-child(5)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $('tr').css('border-bottom', '1px solid black');
                     $('td a').css('cursor', 'pointer');
-                    $(".byPeople tr td:nth-child(1)").css({
-                        'width': '150px'
+    
+                    //Close
+                    $('#adv .btnBack').on('click', function () {
+                        $('#adv').remove();
+                        $('#landingPage').show();
                     });
-                    $(".byPeople tr td:nth-child(2)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $(".byPeople tr td:nth-child(3)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $(".byPeople tr td:nth-child(4)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $('.byPeople').css({
-                        'visibility': ''
-                    });
-                })
-                //訂單細節-另開事件
-                $(document).on('click', '.byPeople table a', function () {
-                    var func = $(this).attr('func');
-                    var fb_id = $(this).attr('name');
-                    var htmlString = '';
-                    dataList[func].data.filter(data => {
-                        return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
-                    }).forEach(data => {
-                        htmlString += `<tr>
-                            <td>${data.order_id}</td>
-                            <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                            <td>${data.post_snapshot_title}</td>
-                            <td>${toCurrency(data.order_total_price)}</td>
-                            <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
-                        </tr>`
-                        // htmlString +=data.order_payment_status
-                        // htmlString +=data.order_status
-                    });
-                    //${$(this).parent().parent().find('td:eq(0)').text()}
-                    htmlString = `<html><head><title></title></head>
-                    <body>
-                    <table style='font-size:20px'>
-                    <tr>
-                        <td>訂單序號</td>
-                        <td>會員名稱</td>
-                        <td>團名</td>
-                        <td>小計</td>
-                        <td>確認時間</td>
-                    </tr>
-                    ${htmlString}
-                    </table></body></html>`;
-                    var wnd = window.open("about:blank", '', config = 'height=800px,width=1300px');
-                    wnd.document.write(htmlString);
-                })
-
+    
+                    //確認清單-事件
+                    $('.byStatus table a').on('click', function () {
+                        $('.byPeople table tr:gt(1)').remove();
+    
+                        var func = $(this).attr('name');
+                        $('.byPeople table a').attr('func', func);
+    
+                        var htmlString = '';
+                        dataList[func].data_people.forEach(data => {
+                            htmlString += `<tr>
+                                <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
+                                <td>${data.count}</td>
+                                <td>${toCurrency(data.sum)}</td>
+                                <td><a func=${func} name=${data.user_fb_profile_id}>另開</a></td>
+                            </tr>`
+                        });
+                        $('.byPeople table').append(htmlString);
+    
+                        $('td a').css('cursor', 'pointer');
+                        $(".byPeople tr td:nth-child(1)").css({
+                            'width': '150px'
+                        });
+                        $(".byPeople tr td:nth-child(2)").css({
+                            'text-align': 'right',
+                            'width': '100px'
+                        });
+                        $(".byPeople tr td:nth-child(3)").css({
+                            'text-align': 'right',
+                            'width': '100px'
+                        });
+                        $(".byPeople tr td:nth-child(4)").css({
+                            'text-align': 'right',
+                            'width': '100px'
+                        });
+                        $('.byPeople').css({
+                            'visibility': ''
+                        });
+                    })
+                    //訂單細節-另開事件
+                    $(document).on('click', '.byPeople table a', function () {
+                        var func = $(this).attr('func');
+                        var fb_id = $(this).attr('name');
+                        var htmlString = '';
+                        dataList[func].data.filter(data => {
+                            return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
+                        }).forEach(data => {
+                            htmlString += `<tr>
+                                <td>${data.order_id}</td>
+                                <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
+                                <td>${data.post_snapshot_title}</td>
+                                <td>${toCurrency(data.order_total_price)}</td>
+                                <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
+                            </tr>`
+                            // htmlString +=data.order_payment_status
+                            // htmlString +=data.order_status
+                        });
+                        //${$(this).parent().parent().find('td:eq(0)').text()}
+                        htmlString = `<html><head><title></title></head>
+                        <body>
+                        <table style='font-size:20px'>
+                        <tr>
+                            <td>訂單序號</td>
+                            <td>會員名稱</td>
+                            <td>團名</td>
+                            <td>小計</td>
+                            <td>確認時間</td>
+                        </tr>
+                        ${htmlString}
+                        </table></body></html>`;
+                        var wnd = window.open("about:blank", '', config = 'height=800px,width=1300px');
+                        wnd.document.write(htmlString);
+                    })
+                });
             };
             return {
                 init: _init,
@@ -1129,12 +959,12 @@
                 $('#landingPage .day').on('click', function () {
                     $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
                     $("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
-                    _init();
+                    _init('day');
                 });
                 $('#landingPage .month').on('click', function () {
                     $("#searchDateE").datepicker("update", new Date());
                     $("#searchDateS").datepicker("update", getDateString(new Date(), 'm') + '-01');
-                    _init();
+                    _init('thisMonthSale');
                 });
                 $('#landingPage .traceLastMonth').on('click', function () {
                     var lastMonthStartDate = new Date();
@@ -1154,7 +984,6 @@
                     $("#searchDateS").datepicker("update", getDateString(new Date('2020-7-09')));
 
                     _init_trace('traceHistory', new Date('2020-07-09'), lastMonthStartDate);
-                    u
                 });
 
             },
@@ -1182,7 +1011,6 @@
                     $(document).ajaxSend(function (e, t, o) {
                         t.done(function (e) {
                             if (order_data = order_data.concat(t.responseJSON.data), !t.responseJSON.nextPage) {
-                                console.log(t.responseJSON);
                                 var o = [
                                     ["姓名", "FB連結", "下單社團", "商品訂單", "付款狀態", "商品", "數量", "價格"]
                                 ];
