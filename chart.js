@@ -16,6 +16,7 @@
         traceLastMonth: null,
         traceHistory: null
     };
+    var isForceReload = false;
     var order_data = [];
     var sellerordersearch = function () {
         var _loadingScript = function () {
@@ -30,9 +31,8 @@
             });
         }();
         var _init = function (mode) {
-            debugger
-            console.log('_init call loading')
-            if (ajaxObject[mode]) {
+
+            if (ajaxObject[mode] && !isForceReload) {
                 order_data = ajaxObject[mode];
                 data_process.init();
                 data_process.initToUI();
@@ -54,7 +54,7 @@
                         //
                         ajaxObject[mode] = $.extend(true, [], order_data);
                         console.log('init call')
-                     
+
                         data_process.init();
                         data_process.initToUI();
                         $('#landingPage').hide();
@@ -80,7 +80,7 @@
             }, 3000)
         }
         var _init_trace = function (mode, startDate, endDate) {
-            if (ajaxObject[mode]) {
+            if (ajaxObject[mode] && !isForceReload) {
                 order_data = ajaxObject[mode];
                 data_process.init_Trace(mode, startDate, endDate);
                 $('#landingPage').hide();
@@ -520,11 +520,11 @@
         var UIControl = function () {
             var _init = function () {
                 $.ajax({
-                    url: rawUrl + '/ui/sale/index.html',
+                    url: rawUrl + '/ui/sellordersearch/sale/index.html',
                     async: false
                 }).then(function (data) {
                     $('body').append(data);
-                    
+
                     $('#adv input').css({
                         'margin-left': '5px'
                     });
@@ -562,6 +562,123 @@
                     });
                 });
 
+            };
+            var _init_trace = function (mode, dataList) {
+                $.ajax({
+                    url: rawUrl + '/ui/sellordersearch/trace/index.html',
+                    async: false
+                }).then(function (data) {
+                    var htmlString = data;
+                    var keys = Object.keys(dataList);
+                    keys.forEach(key => {
+                        dataList[key].sum = (dataList[key].sum > 0) ? dataList[key].sum : '-';
+                        dataList[key].count = (dataList[key].count > 0) ? dataList[key].count : '-';
+
+                        htmlString = htmlString
+                            .replace('@' + key + '.sum', toCurrency(dataList[key].sum))
+                            .replace('@' + key + '.per', dataList[key].per + '%')
+                            .replace('@' + key + '.count', toCurrency(dataList[key].count));
+                    });
+                    $("body").append(htmlString);
+                }).then(function () {
+                    $(".byStatus tr td:nth-child(2)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $(".byStatus tr td:nth-child(3)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $(".byStatus tr td:nth-child(4)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $(".byStatus tr td:nth-child(5)").css({
+                        'text-align': 'right',
+                        'width': '100px'
+                    });
+                    $('tr').css('border-bottom', '1px solid black');
+                    $('td a').css('cursor', 'pointer');
+
+                    //Close
+                    $('#adv .btnBack').on('click', function () {
+                        $('#adv').remove();
+                        $('#landingPage').show();
+                    });
+
+                    //確認清單-事件
+                    $(document).on('click', '.byStatus table a', function () {
+                        $('.byPeople table tr:gt(1)').remove();
+
+                        var func = $(this).attr('name');
+                        $('.byPeople table a').attr('func', func);
+
+                        var htmlString = '';
+                        dataList[func].data_people.forEach(data => {
+                            htmlString += `<tr>
+                                <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
+                                <td>${data.count}</td>
+                                <td>${toCurrency(data.sum)}</td>
+                                <td><a func=${func} name=${data.user_fb_profile_id}>另開</a></td>
+                            </tr>`
+                        });
+                        $('.byPeople table').append(htmlString);
+
+                        $('td a').css('cursor', 'pointer');
+                        $(".byPeople tr td:nth-child(1)").css({
+                            'width': '150px'
+                        });
+                        $(".byPeople tr td:nth-child(2)").css({
+                            'text-align': 'right',
+                            'width': '100px'
+                        });
+                        $(".byPeople tr td:nth-child(3)").css({
+                            'text-align': 'right',
+                            'width': '100px'
+                        });
+                        $(".byPeople tr td:nth-child(4)").css({
+                            'text-align': 'right',
+                            'width': '100px'
+                        });
+                        $('.byPeople').css({
+                            'visibility': ''
+                        });
+                    })
+                    //訂單細節-另開事件
+                    $(document).on('click', '.byPeople table a', function () {
+                        var func = $(this).attr('func');
+                        var fb_id = $(this).attr('name');
+                        var htmlString = '';
+                        dataList[func].data.filter(data => {
+                            return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
+                        }).forEach(data => {
+                            htmlString += `<tr>
+                                    <td>${data.order_id}</td>
+                                    <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
+                                    <td>${data.post_snapshot_title}</td>
+                                    <td>${toCurrency(data.order_total_price)}</td>
+                                    <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
+                                </tr>`
+                            // htmlString +=data.order_payment_status
+                            // htmlString +=data.order_status
+                        });
+                        //${$(this).parent().parent().find('td:eq(0)').text()}
+                        htmlString = `<html><head><title></title></head>
+                            <body>
+                            <table style='font-size:20px'>
+                            <tr>
+                                <td>訂單序號</td>
+                                <td>會員名稱</td>
+                                <td>團名</td>
+                                <td>小計</td>
+                                <td>確認時間</td>
+                            </tr>
+                            ${htmlString}
+                            </table></body></html>`;
+                        var wnd = window.open("about:blank", '', config = 'height=800px,width=1300px');
+                        wnd.document.write(htmlString);
+                    })
+                });
             };
             var _showSingleDay = function (dateString, storeOwnerList, store_sale, store_order, store_uu) {
                 Highcharts.chart('day_container', {
@@ -814,176 +931,66 @@
                 $('#reportDiv').html(htmlString);
 
             }
-            var _init_trace = function (mode, dataList) {
-                $.ajax({
-                    url: rawUrl + '/ui/trace/index.html',
-                    async: false
-                }).then(function (data) {
-                    var htmlString = data;
-                    var keys = Object.keys(dataList);
-                    keys.forEach(key => {
-                        dataList[key].sum = (dataList[key].sum > 0) ? dataList[key].sum : '-';
-                        dataList[key].count = (dataList[key].count > 0) ? dataList[key].count : '-';
-    
-                        htmlString = htmlString
-                            .replace('@' + key + '.sum', toCurrency(dataList[key].sum))
-                            .replace('@' + key + '.per', dataList[key].per + '%')
-                            .replace('@' + key + '.count', toCurrency(dataList[key].count));
-                    });
-                    $("body").append(htmlString);
 
-
-                    $(".byStatus tr td:nth-child(2)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $(".byStatus tr td:nth-child(3)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $(".byStatus tr td:nth-child(4)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $(".byStatus tr td:nth-child(5)").css({
-                        'text-align': 'right',
-                        'width': '100px'
-                    });
-                    $('tr').css('border-bottom', '1px solid black');
-                    $('td a').css('cursor', 'pointer');
-    
-                    //Close
-                    $('#adv .btnBack').on('click', function () {
-                        $('#adv').remove();
-                        $('#landingPage').show();
-                    });
-    
-                    //確認清單-事件
-                    $('.byStatus table a').on('click', function () {
-                        $('.byPeople table tr:gt(1)').remove();
-    
-                        var func = $(this).attr('name');
-                        $('.byPeople table a').attr('func', func);
-    
-                        var htmlString = '';
-                        dataList[func].data_people.forEach(data => {
-                            htmlString += `<tr>
-                                <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                                <td>${data.count}</td>
-                                <td>${toCurrency(data.sum)}</td>
-                                <td><a func=${func} name=${data.user_fb_profile_id}>另開</a></td>
-                            </tr>`
-                        });
-                        $('.byPeople table').append(htmlString);
-    
-                        $('td a').css('cursor', 'pointer');
-                        $(".byPeople tr td:nth-child(1)").css({
-                            'width': '150px'
-                        });
-                        $(".byPeople tr td:nth-child(2)").css({
-                            'text-align': 'right',
-                            'width': '100px'
-                        });
-                        $(".byPeople tr td:nth-child(3)").css({
-                            'text-align': 'right',
-                            'width': '100px'
-                        });
-                        $(".byPeople tr td:nth-child(4)").css({
-                            'text-align': 'right',
-                            'width': '100px'
-                        });
-                        $('.byPeople').css({
-                            'visibility': ''
-                        });
-                    })
-                    //訂單細節-另開事件
-                    $(document).on('click', '.byPeople table a', function () {
-                        var func = $(this).attr('func');
-                        var fb_id = $(this).attr('name');
-                        var htmlString = '';
-                        dataList[func].data.filter(data => {
-                            return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
-                        }).forEach(data => {
-                            htmlString += `<tr>
-                                <td>${data.order_id}</td>
-                                <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                                <td>${data.post_snapshot_title}</td>
-                                <td>${toCurrency(data.order_total_price)}</td>
-                                <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
-                            </tr>`
-                            // htmlString +=data.order_payment_status
-                            // htmlString +=data.order_status
-                        });
-                        //${$(this).parent().parent().find('td:eq(0)').text()}
-                        htmlString = `<html><head><title></title></head>
-                        <body>
-                        <table style='font-size:20px'>
-                        <tr>
-                            <td>訂單序號</td>
-                            <td>會員名稱</td>
-                            <td>團名</td>
-                            <td>小計</td>
-                            <td>確認時間</td>
-                        </tr>
-                        ${htmlString}
-                        </table></body></html>`;
-                        var wnd = window.open("about:blank", '', config = 'height=800px,width=1300px');
-                        wnd.document.write(htmlString);
-                    })
-                });
-            };
             return {
                 init: _init,
+                initTrace: _init_trace,
                 changSelectDay: _showSingleDay,
                 showSelectDayPerHour: _showPerHour,
                 showSelectPerDay: _showPerDay,
                 ShowSelectPerMonth: _showPerMonth,
                 ShowSelectHotItem: _showHot,
-                ShowSelectReport: _showReport,
-                initTrace: _init_trace
+                ShowSelectReport: _showReport
             }
         }();
         return {
             landing: function () {
-                $('body').append(`<div id='landingPage' style='top: 250px;left: 50px;right: 50px;position: fixed;z-index: 99;background: #e2e2df;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
-                    <button class='btnClose' style='right: 80px;position: fixed'>關閉</button> 
-                
-                    <div class='day' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本日業績</div>
-                    <div class='month'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>本月業績</div>
-                    <div class='traceLastMonth'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(上月)</div>
-                    <div class='traceHistory'style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>訂單追蹤(歷史)</div>
-                </div>`);
-                $('#landingPage .btnClose').on('click', function () {
-                    $('#landingPage').show().hide();
-                });
-                $('#landingPage .day').on('click', function () {
-                    $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
-                    $("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
-                    _init('day');
-                });
-                $('#landingPage .month').on('click', function () {
-                    $("#searchDateE").datepicker("update", new Date());
-                    $("#searchDateS").datepicker("update", getDateString(new Date(), 'm') + '-01');
-                    _init('thisMonthSale');
-                });
-                $('#landingPage .traceLastMonth').on('click', function () {
-                    var lastMonthStartDate = new Date();
-                    lastMonthStartDate.setDate(1);
-                    lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
-                    var lastMonthEndDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
-                    $("#searchDateE").datepicker("update", getDateString(lastMonthEndDate));
-                    $("#searchDateS").datepicker("update", getDateString(lastMonthStartDate));;
-                    _init_trace('traceLastMonth', lastMonthStartDate, lastMonthEndDate);
-                });
-                $('#landingPage .traceHistory').on('click', function () {
-                    var lastMonthStartDate = new Date();
-                    lastMonthStartDate.setDate(1);
-                    lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
+                $.ajax({
+                    url: rawUrl + 'ui/sellordersearch/index.html',
+                    async: false
+                }).then(function (data) {
+                    $('body').append(data);
+                }).then(function () {
+                    $('#landingPage .forceReload').on('click', o => {
+                        if($(this).is(':checked')){
+                            isForceReload = true;
+                       } else {
+                            isForceReload = false;
+                       }
+                    })
+                    $('#landingPage .btnClose').on('click', function () {
+                        $('#landingPage').show().hide();
+                    });
+                    $('#landingPage .day').on('click', function () {
+                        $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
+                        $("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
+                        _init('day');
+                    });
+                    $('#landingPage .month').on('click', function () {
+                        $("#searchDateE").datepicker("update", new Date());
+                        $("#searchDateS").datepicker("update", getDateString(new Date(), 'm') + '-01');
+                        _init('thisMonthSale');
+                    });
+                    $('#landingPage .traceLastMonth').on('click', function () {
+                        var lastMonthStartDate = new Date();
+                        lastMonthStartDate.setDate(1);
+                        lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
+                        var lastMonthEndDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
+                        $("#searchDateE").datepicker("update", getDateString(lastMonthEndDate));
+                        $("#searchDateS").datepicker("update", getDateString(lastMonthStartDate));;
+                        _init_trace('traceLastMonth', lastMonthStartDate, lastMonthEndDate);
+                    });
+                    $('#landingPage .traceHistory').on('click', function () {
+                        var lastMonthStartDate = new Date();
+                        lastMonthStartDate.setDate(1);
+                        lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
 
-                    $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
-                    $("#searchDateS").datepicker("update", getDateString(new Date('2020-7-09')));
+                        $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
+                        $("#searchDateS").datepicker("update", getDateString(new Date('2020-7-09')));
 
-                    _init_trace('traceHistory', new Date('2020-07-09'), lastMonthStartDate);
+                        _init_trace('traceHistory', new Date('2020-07-09'), lastMonthStartDate);
+                    });
+
                 });
 
             },
