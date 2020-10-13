@@ -9,7 +9,7 @@
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-    var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/main/';
+    var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/dev/';
     var order_data = [];
     var sellerordersearch = function () {
         var isInit = false;
