@@ -4,13 +4,13 @@
         }
         return date.getFullYear().toString() + '-' + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
-
     function toCurrency(num) {
         var parts = num.toString().split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-    var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/dev/';
+    //var rawUrl = 'http://127.0.0.1:5500/'
+    var rawUrl = 'https://raw.githubusercontent.com/pattykiang/fb_report/main/';
     var ajaxObject = {
         thisMonthSale: null,
         traceLastMonth: null,
@@ -20,8 +20,8 @@
     var order_data = [];
     var sellerordersearch = function () {
         var _loadingScript = function () {
-            $.getScript('https://code.highcharts.com/highcharts.js', function () {
-                $.getScript('https://code.highcharts.com/modules/variable-pie.js', function () {
+            $.getScript('https://code.highcharts.com/highcharts.js', e => {
+                $.getScript('https://code.highcharts.com/modules/variable-pie.js', e => {
                     Highcharts.setOptions({
                         lang: {
                             thousandsSep: ','
@@ -31,7 +31,6 @@
             });
         }();
         var _init = function (mode) {
-
             if (ajaxObject[mode] && !isForceReload) {
                 order_data = ajaxObject[mode];
                 data_process.init();
@@ -41,7 +40,8 @@
             }
             $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
-                    if (order_data = order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
+                    if(order_data = order_data.concat(e.responseJSON.data),!e.responseJSON.nextPage){
+                        
                         $(document).off('ajaxSend');
 
                         //去除重複object
@@ -68,11 +68,11 @@
                 })
             });
             order_data = []
-            $("#searchDateE").trigger('changeDate');
-            $("#searchDateS").trigger('changeDate');
             $("html, body").animate({
                 scrollTop: 0
-            }, 5);
+            }, 1);
+            $("#searchDateE").trigger('changeDate');
+            $("#searchDateS").trigger('changeDate');
             setTimeout(function () {
                 $("html, body").animate({
                     scrollTop: $(document).height()
@@ -115,11 +115,11 @@
                 })
             });
             order_data = [];
-            $("#searchDateE").trigger('changeDate');
-            $("#searchDateS").trigger('changeDate');
             $("html, body").animate({
                 scrollTop: 0
-            }, 5);
+            }, 1);
+            $("#searchDateE").trigger('changeDate');
+            $("#searchDateS").trigger('changeDate');
             setTimeout(function () {
                 $("html, body").animate({
                     scrollTop: $(document).height()
@@ -523,7 +523,9 @@
                     url: rawUrl + '/ui/sellordersearch/sale/index.html',
                     async: false
                 }).then(function (data) {
-                    $('body').append(data);
+                    if($('#adv').length==0){
+                        $('body').append(data);
+                    }
 
                     $('#adv input').css({
                         'margin-left': '5px'
@@ -537,21 +539,21 @@
                     $
                         ("#showSingle").datepicker({
                             format: 'yyyy-mm-dd',
-                        }).on('changeDate', function () {
+                        }).on('changeDate', e => {
                             data_process.refreshUI($("#showSingle").val());
                         });
-                    $('#adv a[data-toggle="pill"]').on('shown.bs.tab', function () {
+                    $('#adv a[data-toggle="pill"]').on('shown.bs.tab', e => {
                         data_process.refreshUI($("#showSingle").val());
                     })
-                    $('#adv .btnBack').on('click', function () {
+                    $('#adv .btnBack').on('click', e => {
                         $('#adv').remove();
                         $('#landingPage').show();
                     });
 
-                    $('input[name="owner"]').on('change', function () {
+                    $('input[name="owner"]').on('change', e => {
                         data_process.refreshUI($("#showSingle").val());
                     });
-                    $('input[name="owner_all"]').on('change', function () {
+                    $('input[name="owner_all"]').on('change', e => {
                         if ($(this).prop('checked')) {
                             $('input[name="owner"]').prop('checked', true);
                         } else {
@@ -583,34 +585,34 @@
                 }).then(function () {
                     $(".byStatus tr td:nth-child(2)").css({
                         'text-align': 'right',
-                        'width': '100px'
+                        'width': '80px'
                     });
                     $(".byStatus tr td:nth-child(3)").css({
                         'text-align': 'right',
-                        'width': '100px'
+                        'width': '90px'
                     });
                     $(".byStatus tr td:nth-child(4)").css({
                         'text-align': 'right',
-                        'width': '100px'
+                        'width': '80px'
                     });
                     $(".byStatus tr td:nth-child(5)").css({
                         'text-align': 'right',
-                        'width': '100px'
+                        'width': '80px'
                     });
                     $('tr').css('border-bottom', '1px solid black');
                     $('td a').css('cursor', 'pointer');
 
                     //Close
-                    $('#adv .btnBack').on('click', function () {
+                    $('#adv .btnBack').on('click', e => {
                         $('#adv').remove();
                         $('#landingPage').show();
                     });
 
                     //確認清單-事件
-                    $(document).on('click', '.byStatus table a', function () {
+                    $(document).on('click', '.byStatus table a', e => {
                         $('.byPeople table tr:gt(1)').remove();
 
-                        var func = $(this).attr('name');
+                        var func = e.currentTarget.name;
                         $('.byPeople table a').attr('func', func);
 
                         var htmlString = '';
@@ -626,28 +628,28 @@
 
                         $('td a').css('cursor', 'pointer');
                         $(".byPeople tr td:nth-child(1)").css({
-                            'width': '150px'
+                            'width': '90px'
                         });
                         $(".byPeople tr td:nth-child(2)").css({
                             'text-align': 'right',
-                            'width': '100px'
+                            'width': '90px'
                         });
                         $(".byPeople tr td:nth-child(3)").css({
                             'text-align': 'right',
-                            'width': '100px'
+                            'width': '90px'
                         });
                         $(".byPeople tr td:nth-child(4)").css({
                             'text-align': 'right',
-                            'width': '100px'
+                            'width': '90px'
                         });
                         $('.byPeople').css({
                             'visibility': ''
                         });
                     })
                     //訂單細節-另開事件
-                    $(document).on('click', '.byPeople table a', function () {
-                        var func = $(this).attr('func');
-                        var fb_id = $(this).attr('name');
+                    $(document).on('click', '.byPeople table a', e => {
+                        var func = $(e.currentTarget).attr('func');
+                        var fb_id = e.currentTarget.name;
                         var htmlString = '';
                         dataList[func].data.filter(data => {
                             return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
@@ -657,12 +659,9 @@
                                     <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
                                     <td>${data.post_snapshot_title}</td>
                                     <td>${toCurrency(data.order_total_price)}</td>
-                                    <td>${new Date(data.order_checked_time+' UTC').toString()}</td>
+                                    <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
                                 </tr>`
-                            // htmlString +=data.order_payment_status
-                            // htmlString +=data.order_status
                         });
-                        //${$(this).parent().parent().find('td:eq(0)').text()}
                         htmlString = `<html><head><title></title></head>
                             <body>
                             <table style='font-size:20px'>
@@ -951,27 +950,27 @@
                 }).then(function (data) {
                     $('body').append(data);
                 }).then(function () {
-                    $('#landingPage .forceReload').on('click', o => {
-                        if($(this).is(':checked')){
+                    $('#landingPage .forceReload').on('click', e => {
+                        if( $('#landingPage .forceReload').is(':checked')){
                             isForceReload = true;
                        } else {
                             isForceReload = false;
                        }
                     })
-                    $('#landingPage .btnClose').on('click', function () {
+                    $('#landingPage .btnClose').on('click', e => {
                         $('#landingPage').show().hide();
                     });
-                    $('#landingPage .day').on('click', function () {
-                        $("#searchDateS").datepicker("update", new Date()).trigger('changeDate');
-                        $("#searchDateE").datepicker("update", new Date()).trigger('changeDate');
+                    $('#landingPage .day').on('click', e => {
+                        $("#searchDateE").datepicker("update", new Date());
+                        $("#searchDateS").datepicker("update", new Date());
                         _init('day');
                     });
-                    $('#landingPage .month').on('click', function () {
+                    $('#landingPage .month').on('click', e => {
                         $("#searchDateE").datepicker("update", new Date());
                         $("#searchDateS").datepicker("update", getDateString(new Date(), 'm') + '-01');
                         _init('thisMonthSale');
                     });
-                    $('#landingPage .traceLastMonth').on('click', function () {
+                    $('#landingPage .traceLastMonth').on('click', e => {
                         var lastMonthStartDate = new Date();
                         lastMonthStartDate.setDate(1);
                         lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
@@ -980,15 +979,18 @@
                         $("#searchDateS").datepicker("update", getDateString(lastMonthStartDate));;
                         _init_trace('traceLastMonth', lastMonthStartDate, lastMonthEndDate);
                     });
-                    $('#landingPage .traceHistory').on('click', function () {
+                    $('#landingPage .traceHistory').on('click', e => {
                         var lastMonthStartDate = new Date();
                         lastMonthStartDate.setDate(1);
                         lastMonthStartDate.setMonth(lastMonthStartDate.getMonth() - 1);
 
                         $("#searchDateE").datepicker("update", getDateString(lastMonthStartDate));
-                        $("#searchDateS").datepicker("update", getDateString(new Date('2020-7-09')));
+                        var _date = new Date('2020-8-28');
+                        //var _date = new Date('2020-7-09');
+                        
+                        $("#searchDateS").datepicker("update", getDateString(_date));
 
-                        _init_trace('traceHistory', new Date('2020-07-09'), lastMonthStartDate);
+                        _init_trace('traceHistory', _date, lastMonthStartDate);
                     });
 
                 });
@@ -1010,10 +1012,10 @@
                     <div class='download' style='width: 150px;height: 150px;display: inline-block;text-align: center;line-height: 150px;font-size: 20px;cursor: pointer;margin-left: 50px;vertical-align: middle;border: 1px solid rgb(0,0,0);'>未出貨清單下載</div>
             
                 </div>`);
-                $('#landingPage .btnClose').on('click', function () {
+                $('#landingPage .btnClose').on('click', e => {
                     $('#landingPage').hide();
                 });
-                $('#landingPage .download').on('click', function () {
+                $('#landingPage .download').on('click', e => {
                     var order_data = [];
                     $(document).ajaxSend(function (e, t, o) {
                         t.done(function (e) {
