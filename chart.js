@@ -9,7 +9,6 @@
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-    //var rawUrl = 'http://127.0.0.1:5500/'
     
    
     var extendData = {
@@ -653,7 +652,7 @@
                         });
                     })
                     //訂單細節-另開事件
-                    $(document).on('click', '.byPeople table a', e => {
+                    $(document).off('click', '.byPeople table a').on('click', '.byPeople table a', e => {
                         var func = $(e.currentTarget).attr('func');
                         var fb_id = e.currentTarget.name;
                         var htmlString = '';
