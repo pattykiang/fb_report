@@ -631,21 +631,23 @@
                         });
                         $('.byPeople table').append(htmlString);
 
+                        $(".byPeople tr:eq(1) td:eq(0)").text('所有人 (共'+dataList[func].data_people.length+'人)');
+
                         $('td a').css('cursor', 'pointer');
                         $(".byPeople tr td:nth-child(1)").css({
-                            'width': '90px'
+                            'width': '120px'
                         });
                         $(".byPeople tr td:nth-child(2)").css({
                             'text-align': 'right',
-                            'width': '90px'
+                            'width': '80px'
                         });
                         $(".byPeople tr td:nth-child(3)").css({
                             'text-align': 'right',
-                            'width': '90px'
+                            'width': '80px'
                         });
                         $(".byPeople tr td:nth-child(4)").css({
                             'text-align': 'right',
-                            'width': '90px'
+                            'width': '80px'
                         });
                         $('.byPeople').css({
                             'visibility': ''
