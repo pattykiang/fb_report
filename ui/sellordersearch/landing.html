@@ -24,6 +24,10 @@
         <div>
             <input type="checkbox" class='forceReload'>重新抓取資料
             <button style="cursor: pointer;" class='btnClose'>關閉</button>
+            <div id="vue_progressbar" style='margin-top: 20px;' v-if='isShow'>
+                <p>資料取得進度</p>
+                <vue-simple-progress size="large" :val="percentValue" :text="percentValue + '%'"></vue-simple-progress>
+            </div>
         </div>
     </div>
 </div>

@@ -24,6 +24,8 @@
     document.extendData = extendData;
 
     var sellerordersearch = function () {
+        var vue_progressbar;
+        document.vue_progressbar = vue_progressbar;
         var _loadingScript = function () {
             $.getScript('https://code.highcharts.com/highcharts.js', e => {
                 $.getScript('https://code.highcharts.com/modules/variable-pie.js', e => {
@@ -34,6 +36,45 @@
                     });
                 });
             });
+            $.getScript('https://vuejs.org/js/vue.min.js', e => {
+                $.getScript('https://unpkg.com/vue-simple-progress@1.1.1/dist/vue-simple-progress.min.js', e => {
+                    vue_progressbar = new Vue({
+                            el: '#vue_progressbar',
+                            data: {
+                                percentValue:0,
+                                isShow:false,
+                                allTime:null,
+                                endTime:null
+                            },
+                            methods:{
+                                init:function (startTimeString,endTimeString){
+                                    this.endTime = new Date(endTimeString);
+                                    this.allTime = this.endTime - new Date(startTimeString);
+                                    this.isShow = true;
+                                    this.setPercent(0);
+                                },
+                                setNowTime: function (nowTimeString){
+                                    var nowTime = this.endTime - new Date(nowTimeString);
+                                    this.setPercent(nowTime*100/this.allTime);
+                                },
+                                setPercent:function (percent){
+                                    if(percent!=100){
+                                        this.isShow = true;
+                                    }
+                                    else{
+                                        this.isShow = false;
+                                    }
+                                    this.percentValue = percent;
+                                }
+                            },
+                            beforeUpdate: function() {
+                                this.percentValue = Math.floor(this.percentValue);
+                            }
+                        })
+                    });
+            });
+            
+            
         }();
         var _init = function (mode) {
             if (extendData.ajaxObject[mode] && !extendData.isForceReload) {
@@ -45,9 +86,13 @@
             }
             $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
+                    //document.vue_progressbar.$data.percentValue = nowTime*100/allTime;
+                    //vue_progressbar.setPercent(nowTime*100/allTime);
+                    vue_progressbar.setNowTime(e.responseJSON.data[e.responseJSON.data.length-1].order_checked_time+' UTC')
+                    
                     if(extendData.order_data = extendData.order_data.concat(e.responseJSON.data),!e.responseJSON.nextPage){
-                        
                         $(document).off('ajaxSend');
+                        vue_progressbar.setPercent(100);
 
                         //去除重複object
                         extendData.order_data = [...new Set(extendData.order_data.map(order => {
@@ -73,11 +118,17 @@
                 })
             });
             extendData.order_data = []
+            vue_progressbar.init($("#searchDateS").val()+' 00:00:00',$("#searchDateE").val()+' 23:59:59');
+
             $("html, body").animate({
                 scrollTop: 0
             }, 1);
+
             $("#searchDateE").trigger('changeDate');
             $("#searchDateS").trigger('changeDate');
+
+           
+
             setTimeout(function () {
                 $("html, body").animate({
                     scrollTop: $(document).height()
@@ -93,9 +144,12 @@
             }
             $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
+                    vue_progressbar.setNowTime(e.responseJSON.data[e.responseJSON.data.length-1].order_checked_time+' UTC');
+                   
                     if (extendData.order_data = extendData.order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
                         $(document).off('ajaxSend');
-
+                        vue_progressbar.setPercent(100);
+                      
                         //去除重複object
                         extendData.order_data = [...new Set(extendData.order_data.map(order => {
                             return JSON.stringify(order)
@@ -120,6 +174,8 @@
                 })
             });
             extendData.order_data = [];
+            vue_progressbar.init($("#searchDateS").val()+' 00:00:00',$("#searchDateE").val()+' 23:59:59');
+
             $("html, body").animate({
                 scrollTop: 0
             }, 1);
