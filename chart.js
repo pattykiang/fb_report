@@ -1033,6 +1033,9 @@
                         $("#searchDateS").datepicker("update", getDateString(new Date(), 'm') + '-01');
                         _init('thisMonthSale');
                     });
+                    $('#landingPage .any').on('click', e => {
+                        _init('any');
+                    });
                     $('#landingPage .traceLastMonth').on('click', e => {
                         var lastMonthStartDate = new Date();
                         lastMonthStartDate.setDate(1);
