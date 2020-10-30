@@ -22,7 +22,7 @@
                     <td>@order_finish.count</td>
                     <td>@order_finish.sum</td>
                     <td>@order_finish.per</td>
-                    <td></td>
+                    <td><a name='order_finish'>確認清單</a></td>
                 </tr>
                 <tr>
                     <td style='padding-left:50px'>未完成</td>
@@ -46,52 +46,11 @@
                     <td><a name='order_unpaid'>確認清單</a></td>
                 </tr>
                 <tr>
-                    <td style='height:15px' colspan='5'>已到貨</td>
-                </tr>
-                <tr>
-                    <td style='padding-left:50px'>已付款<em style="font-size:12px">(確認出貨狀況)</em></td>
-                    <td>@order_container_paid.count</td>
-                    <td>@order_container_paid.sum</td>
+                    <td style='height:15px'>未到貨</td>
+                    <td>@order_going.count</td>
+                    <td>@order_going.sum</td>
                     <td></td>
-                    <td><a name='order_container_paid'>確認清單</a></td>
-                </tr>
-                <tr>
-                    <td style='padding-left:50px'>付款中<em style="font-size:12px">(向客戶催款)</em></td>
-                    <td>@order_container_paying.count</td>
-                    <td>@order_container_paying.sum</td>
-                    <td></td>
-                    <td><a name='order_container_paying'>確認清單</a></td>
-                </tr>
-                <tr>
-                    <td style='padding-left:50px'>未付款<em style="font-size:12px">(轉付款單)</em></td>
-                    <td>@order_container_unpaid.count</td>
-                    <td>@order_container_unpaid.sum</td>
-                    <td></td>
-                    <td><a name='order_container_unpaid'>確認清單</a></td>
-                </tr>
-                <tr>
-                    <td style='height:15px' colspan='5'>未到貨</td>
-                </tr>
-                <tr>
-                    <td style='padding-left:50px'>已付款<em style="font-size:12px">(需掌握訂貨狀況)</em></td>
-                    <td>@order_going_paid.count</td>
-                    <td>@order_going_paid.sum</td>
-                    <td></td>
-                    <td><a name='order_going_paid'>確認清單</a></td>
-                </tr>
-                <tr>
-                    <td style='padding-left:50px'>付款中<em style="font-size:12px">(可轉黑名單)</em></td>
-                    <td>@order_going_paying.count</td>
-                    <td>@order_going_paying.sum</td>
-                    <td></td>
-                    <td><a name='order_going_paying'>確認清單</a></td>
-                </tr>
-                <tr>
-                    <td style='padding-left:50px'>未付款<em style="font-size:12px">(可轉黑名單)</em></td>
-                    <td>@order_going_unpaid.count</td>
-                    <td>@order_going_unpaid.sum</td>
-                    <td></td>
-                    <td><a name='order_going_unpaid'>確認清單</a></td>
+                    <td><a name='order_going'>確認清單</a></td>
                 </tr>
             </table>
         </div>
