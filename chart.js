@@ -683,14 +683,12 @@
                         $('#adv .btnSwitchView').on('click', e => {
                             switchView(viewList.reverse()[0]);
                         });
-
                         //確認清單-事件
                         $(document).on('click', '.byStatus table a', e => {
                             $('.byPeople table tr:gt(1)').remove();
 
                             var func = e.currentTarget.name;
                             $('.byPeople table a').attr('func', func);
-
                             var htmlString = '';
                             dataList[func].data_people.forEach(data => {
                                 htmlString += `<tr>
@@ -729,33 +727,78 @@
                             var func = $(e.currentTarget).attr('func');
                             var fb_id = e.currentTarget.name;
                             var htmlString = '';
-                            dataList[func].data.filter(data => {
-                                return (data.user_fb_profile_id == fb_id || fb_id == 'all') ? true : false
-                            }).forEach(data => {
-                                htmlString += `<tr>
-                                        <td>${data.order_id}</td>
-                                        <td><a href="https://www.facebook.com/${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                                        <td>${data.post_snapshot_title}</td>
-                                        <td>${toCurrency(data.order_total_price)}</td>
-                                        <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
-                                    </tr>`
-                            });
-                            htmlString = `<html><head><title></title></head>
+                           
+                            
+                            if(fb_id!='all'){
+                                var whichClub = '';
+                                dataList[func].data.filter(data => {
+                                    return data.user_fb_profile_id == fb_id 
+                                }).forEach(data => {
+                                    
+                                    whichClub = data.order_product_items[0].product_title[0];
+                                    var comment_html = (data.order_comments.length>0)?`<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>`:data.post_snapshot_title;
+    
+                                    htmlString += `<tr>
+                                            <td>${data.user_fb_name}</td>
+                                            <td>${comment_html}</td>
+                                            <td>${data.order_product_items.length}</td>
+                                            <td>${toCurrency(data.order_total_price)}</td>
+                                            <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
+                                        </tr>`
+                                });
+                                htmlString = `<html><head><title></title></head>
                                 <body>
-                                <table style='font-size:20px'>
+                                <h3>該成員社團為：${whichClub}</h3>
+                                <a href="https://www.facebook.com/${fb_id}" target="_blank">個人臉書</a>
+                                <a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">曉貳訊息</a>
+                                <hr/>
+                                <table style='font-size:20px;border-spacing:10px;'>
                                 <tr>
-                                    <td>訂單序號</td>
                                     <td>會員名稱</td>
                                     <td>團名</td>
+                                    <td>數量</td>
                                     <td>小計</td>
                                     <td>確認時間</td>
                                 </tr>
                                 ${htmlString}
                                 </table></body></html>`;
-                            var wnd = window.open("about:blank", '', config = 'height=800px,width=1300px');
+                            }
+                            else{
+                                dataList[func].data.forEach(data => {
+                                    
+                                    whichClub = data.order_product_items[0].product_title[0];
+                                    var comment_html = (data.order_comments.length>0)?`<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>`:data.post_snapshot_title;
+    
+                                    htmlString += `<tr>
+                                            <td>${whichClub}</td>
+                                            <td><a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">${data.user_fb_name}</a></td>
+                                            <td>${comment_html}</td>
+                                            <td>${data.order_product_items.length}</td>
+                                            <td>${toCurrency(data.order_total_price)}</td>
+                                            <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
+                                        </tr>`
+                                });
+                                htmlString = `<html><head><title></title></head>
+                                <body>
+                                <table style='font-size:20px;border-spacing:10px;'>
+                                <tr>
+                                    <td>下單社團</td>
+                                    <td>會員名稱</td>
+                                    <td>團名</td>
+                                    <td>數量</td>
+                                    <td>小計</td>
+                                    <td>確認時間</td>
+                                    <td>確認狀態</td>
+                                    <td>備註</td>
+                                </tr>
+                                ${htmlString}
+                                </table></body></html>`;
+                            }
+                            
+                            var wnd = window.open("about:blank", '', config = 'height=500px,width=1100px');
                             wnd.document.write(htmlString);
                         })
-                    });
+                    });                            
                 };
                 switchView(viewList[0]);
             };
