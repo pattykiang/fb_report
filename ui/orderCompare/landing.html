@@ -1,0 +1,23 @@
+<div id='landingPage'
+    style='display:flex;width:100%;position: fixed;height: 600px;align-items: center;justify-content: center;top: 200px;'>
+    <div
+        style='z-index: 99;background: #f1f4f5;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;display:flex;height:100%'>
+        <div class='uploadDiv'>
+            <div class='upload_main' style='border:1px solid black;width:200px;height:100px;margin-top: 10px;'>
+                <input type="file" />
+                <div>上傳總倉檔案</div>
+            </div>
+            <div class='upload_second' style='border:1px solid black;width:200px;height:100px;margin-top: 10px;'>
+                <input type="file" />
+                <div>上傳二店檔案</div>
+            </div>
+            <button id='compare' style='width: 100px;height: 50px;margin-top: 10px;'>比對</button>
+            <button id='btnFilter' style='width: 100px;height: 50px;margin-top: 10px;'>過濾合理</button>
+        </div>
+        <div class='compareResult' style='height: 100%;overflow-y: auto;'>
+        </div>
+        <div>
+            <button style="cursor: pointer;" class='btnClose'>關閉</button>
+        </div>
+    </div>
+</div>
