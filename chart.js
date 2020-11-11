@@ -4,22 +4,23 @@
         }
         return date.getFullYear().toString() + '-' + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
+
     function toCurrency(num) {
         var parts = num.toString().split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         return parts.join('.');
     }
-    
-   
+
+
     var extendData = {
-        rawUrl : (document.rawUrl)? document.rawUrl:'https://raw.githubusercontent.com/pattykiang/fb_report/main/',
-        ajaxObject : {
+        rawUrl: (document.rawUrl) ? document.rawUrl : 'https://raw.githubusercontent.com/pattykiang/fb_report/main/',
+        ajaxObject: {
             thisMonthSale: null,
             traceLastMonth: null,
             traceHistory: null
         },
-        isForceReload : false,
-        order_data : []
+        isForceReload: false,
+        order_data: []
     }
     document.extendData = extendData;
 
@@ -39,42 +40,41 @@
             $.getScript('https://vuejs.org/js/vue.min.js', e => {
                 $.getScript('https://unpkg.com/vue-simple-progress@1.1.1/dist/vue-simple-progress.min.js', e => {
                     vue_progressbar = new Vue({
-                            el: '#vue_progressbar',
-                            data: {
-                                percentValue:0,
-                                isShow:false,
-                                allTime:null,
-                                endTime:null
+                        el: '#vue_progressbar',
+                        data: {
+                            percentValue: 0,
+                            isShow: false,
+                            allTime: null,
+                            endTime: null
+                        },
+                        methods: {
+                            init: function (startTimeString, endTimeString) {
+                                this.endTime = new Date(endTimeString);
+                                this.allTime = this.endTime - new Date(startTimeString);
+                                this.isShow = true;
+                                this.setPercent(0);
                             },
-                            methods:{
-                                init:function (startTimeString,endTimeString){
-                                    this.endTime = new Date(endTimeString);
-                                    this.allTime = this.endTime - new Date(startTimeString);
+                            setNowTime: function (nowTimeString) {
+                                var nowTime = this.endTime - new Date(nowTimeString);
+                                this.setPercent(nowTime * 100 / this.allTime);
+                            },
+                            setPercent: function (percent) {
+                                if (percent != 100) {
                                     this.isShow = true;
-                                    this.setPercent(0);
-                                },
-                                setNowTime: function (nowTimeString){
-                                    var nowTime = this.endTime - new Date(nowTimeString);
-                                    this.setPercent(nowTime*100/this.allTime);
-                                },
-                                setPercent:function (percent){
-                                    if(percent!=100){
-                                        this.isShow = true;
-                                    }
-                                    else{
-                                        this.isShow = false;
-                                    }
-                                    this.percentValue = percent;
+                                } else {
+                                    this.isShow = false;
                                 }
-                            },
-                            beforeUpdate: function() {
-                                this.percentValue = Math.floor(this.percentValue);
+                                this.percentValue = percent;
                             }
-                        })
-                    });
+                        },
+                        beforeUpdate: function () {
+                            this.percentValue = Math.floor(this.percentValue);
+                        }
+                    })
+                });
             });
-            
-            
+
+
         }();
         var _init = function (mode) {
             if (extendData.ajaxObject[mode] && !extendData.isForceReload) {
@@ -88,9 +88,9 @@
                 e.done(function (t) {
                     //document.vue_progressbar.$data.percentValue = nowTime*100/allTime;
                     //vue_progressbar.setPercent(nowTime*100/allTime);
-                    vue_progressbar.setNowTime(e.responseJSON.data[e.responseJSON.data.length-1].order_checked_time+' UTC')
-                    
-                    if(extendData.order_data = extendData.order_data.concat(e.responseJSON.data),!e.responseJSON.nextPage){
+                    vue_progressbar.setNowTime(e.responseJSON.data[e.responseJSON.data.length - 1].order_checked_time + ' UTC')
+
+                    if (extendData.order_data = extendData.order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
                         $(document).off('ajaxSend');
                         vue_progressbar.setPercent(100);
 
@@ -118,7 +118,7 @@
                 })
             });
             extendData.order_data = []
-            vue_progressbar.init($("#searchDateS").val()+' 00:00:00',$("#searchDateE").val()+' 23:59:59');
+            vue_progressbar.init($("#searchDateS").val() + ' 00:00:00', $("#searchDateE").val() + ' 23:59:59');
 
             $("html, body").animate({
                 scrollTop: 0
@@ -127,7 +127,7 @@
             $("#searchDateE").trigger('changeDate');
             $("#searchDateS").trigger('changeDate');
 
-           
+
 
             setTimeout(function () {
                 $("html, body").animate({
@@ -144,12 +144,12 @@
             }
             $(document).on('ajaxSend', function (t, e, n) {
                 e.done(function (t) {
-                    vue_progressbar.setNowTime(e.responseJSON.data[e.responseJSON.data.length-1].order_checked_time+' UTC');
-                   
+                    vue_progressbar.setNowTime(e.responseJSON.data[e.responseJSON.data.length - 1].order_checked_time + ' UTC');
+
                     if (extendData.order_data = extendData.order_data.concat(e.responseJSON.data), !e.responseJSON.nextPage) {
                         $(document).off('ajaxSend');
                         vue_progressbar.setPercent(100);
-                      
+
                         //去除重複object
                         extendData.order_data = [...new Set(extendData.order_data.map(order => {
                             return JSON.stringify(order)
@@ -174,7 +174,7 @@
                 })
             });
             extendData.order_data = [];
-            vue_progressbar.init($("#searchDateS").val()+' 00:00:00',$("#searchDateE").val()+' 23:59:59');
+            vue_progressbar.init($("#searchDateS").val() + ' 00:00:00', $("#searchDateE").val() + ' 23:59:59');
 
             $("html, body").animate({
                 scrollTop: 0
@@ -500,15 +500,15 @@
                 function getTraceOrderWithPeriod(data, start, end) {
                     var traceOrder = {};
                     var periodOrder = data; //.filter(order=>{return order.order_checked_time.indexOf(getDateString(start)) && new Date(order.order_checked_time) <end)?true:false}//);
-                    
-                    traceOrder['order_all'] = createTraceOrder(periodOrder,undefined,'addPeople');
+
+                    traceOrder['order_all'] = createTraceOrder(periodOrder, undefined, 'addPeople');
 
                     var periodOrderAllPrice = traceOrder['order_all'].sum;
 
                     var order_finish = periodOrder.filter(order => {
                         return (order.order_status == 'FINISH') ? true : false
                     });
-                    traceOrder['order_finish'] = createTraceOrder(order_finish, periodOrderAllPrice,'addPeople');
+                    traceOrder['order_finish'] = createTraceOrder(order_finish, periodOrderAllPrice, 'addPeople');
 
                     var order_unfinish = periodOrder.filter(order => {
                         return (order.order_status == 'FINISH') ? false : true
@@ -542,12 +542,12 @@
 
 
 
-                    var order_going= order_unfinish.filter(order => {
+                    var order_going = order_unfinish.filter(order => {
                         return (order.order_status == 'CHECKED') ? true : false
                     });
                     traceOrder['order_going'] = createTraceOrder(order_going, periodOrderAllPrice, 'addPeople');
 
-                    
+
                     var order_going_paid = order_unfinish.filter(order => {
                         return (order.order_status == 'CHECKED' && order.order_bpayment_status == 'PAID') ? true : false
                     });
@@ -589,9 +589,10 @@
             var _init = function () {
                 $.ajax({
                     url: extendData.rawUrl + '/ui/sellordersearch/sale/index.html',
-                    async: false,cache:false
+                    async: false,
+                    cache: false
                 }).then(function (data) {
-                    if($('#adv').length==0){
+                    if ($('#adv').length == 0) {
                         $('body').append(data);
                     }
 
@@ -634,11 +635,12 @@
 
             };
             var _init_trace = function (mode, dataList) {
-                var viewList = ['index_v2.html','index.html'];
-                var switchView = function(view){
+                var viewList = ['index_v2.html', 'index.html'];
+                var switchView = function (view) {
                     $.ajax({
-                        url: extendData.rawUrl + '/ui/sellordersearch/trace/'+view,
-                        async: false,cache:false
+                        url: extendData.rawUrl + '/ui/sellordersearch/trace/' + view,
+                        async: false,
+                        cache: false
                     }).then(function (data) {
                         var htmlString = data;
                         var keys = Object.keys(dataList);
@@ -700,7 +702,7 @@
                             });
                             $('.byPeople table').append(htmlString);
 
-                            $(".byPeople tr:eq(1) td:eq(0)").text('共'+dataList[func].data_people.length+'人');
+                            $(".byPeople tr:eq(1) td:eq(0)").text('共' + dataList[func].data_people.length + '人');
 
                             $('td a').css('cursor', 'pointer');
                             $(".byPeople tr td:nth-child(1)").css({
@@ -727,17 +729,17 @@
                             var func = $(e.currentTarget).attr('func');
                             var fb_id = e.currentTarget.name;
                             var htmlString = '';
-                           
-                            
-                            if(fb_id!='all'){
+
+
+                            if (fb_id != 'all') {
                                 var whichClub = '';
                                 dataList[func].data.filter(data => {
-                                    return data.user_fb_profile_id == fb_id 
+                                    return data.user_fb_profile_id == fb_id
                                 }).forEach(data => {
-                                    
+
                                     whichClub = data.order_product_items[0].product_title[0];
-                                    var comment_html = (data.order_comments.length>0)?`<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>`:data.post_snapshot_title;
-    
+                                    var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
+
                                     htmlString += `<tr>
                                             <td>${data.user_fb_name}</td>
                                             <td>${comment_html}</td>
@@ -762,13 +764,12 @@
                                 </tr>
                                 ${htmlString}
                                 </table></body></html>`;
-                            }
-                            else{
+                            } else {
                                 dataList[func].data.forEach(data => {
-                                    
+
                                     whichClub = data.order_product_items[0].product_title[0];
-                                    var comment_html = (data.order_comments.length>0)?`<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>`:data.post_snapshot_title;
-    
+                                    var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
+
                                     htmlString += `<tr>
                                             <td>${whichClub}</td>
                                             <td><a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">${data.user_fb_name}</a></td>
@@ -794,11 +795,11 @@
                                 ${htmlString}
                                 </table></body></html>`;
                             }
-                            
+
                             var wnd = window.open("about:blank", '', config = 'height=500px,width=1100px');
                             wnd.document.write(htmlString);
                         })
-                    });                            
+                    });
                 };
                 switchView(viewList[0]);
             };
@@ -1069,16 +1070,17 @@
             landing: function () {
                 $.ajax({
                     url: extendData.rawUrl + 'ui/sellordersearch/landing.html',
-                    async: false,cache:false
+                    async: false,
+                    cache: false
                 }).then(function (data) {
                     $('body').append(data);
                 }).then(function () {
                     $('#landingPage .forceReload').on('click', e => {
-                        if( $('#landingPage .forceReload').is(':checked')){
+                        if ($('#landingPage .forceReload').is(':checked')) {
                             extendData.isForceReload = true;
-                       } else {
+                        } else {
                             extendData.isForceReload = false;
-                       }
+                        }
                     })
                     $('#landingPage .btnClose').on('click', e => {
                         $('#landingPage').show().hide();
@@ -1126,11 +1128,6 @@
                         _init_trace('traceHistory', _date, _endDate);
                     });
                     $('#landingPage .traceAny').on('click', e => {
-                        // var _endDate = new Date();
-                        // _endDate.setMonth(_endDate.getMonth() - 1);
-                        // _endDate.setDate(0);
-
-                        
                         _init_trace('traceHistory', $('#searchDateS').val(), $('#searchDateE').val());
                     });
 
@@ -1217,11 +1214,224 @@
             }
         }
     }();
+
+    var ordercontainer = function () {
+
+        var mainOrderSouce = '';
+        var secondOrderSouce = '';
+
+        var wb; //讀取完成的資料
+        var rABS = false; //是否將檔案讀取為二進位制字串
+        function importf(obj, callback) { //匯入
+            if (!obj.files) {
+                return;
+            }
+            var f = obj.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var data = e.target.result;
+                if (rABS) {
+                    wb = XLSX.read(btoa(fixdata(data)), { //手動轉化
+                        type: 'base64'
+                    });
+                } else {
+                    wb = XLSX.read(data, {
+                        type: 'binary'
+                    });
+                }
+                //wb.SheetNames[0]是獲取Sheets中第一個Sheet的名字
+                //wb.Sheets[Sheet名]獲取第一個Sheet的資料
+                callback(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]))
+            };
+            if (rABS) {
+                reader.readAsArrayBuffer(f);
+            } else {
+                reader.readAsBinaryString(f);
+            }
+        }
+
+        function fixdata(data) { //檔案流轉BinaryString
+            var o = "",
+                l = 0,
+                w = 10240;
+            for (; l < data.byteLength / w; ++l) o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w, l * w + w)));
+            o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w)));
+            return o;
+        }
+        var _loadingScript = function () {
+            $.getScript('https://unpkg.com/string-similarity/umd/string-similarity.min.js', e => {});
+            $.getScript('https://unpkg.com/xlsx/dist/xlsx.full.min.js', e => {});
+        }();
+        var UIControl = function () {
+            var _init = function () {
+
+            };
+
+            return {
+                init: _init,
+            }
+        }();
+        return {
+            landing: function () {
+                $.ajax({
+                    url: extendData.rawUrl + 'ui/orderCompare/landing.html',
+                    async: false,
+                    cache: false
+                }).then(function (data) {
+                    $('body').append(data);
+                }).then(function () {
+                    $('.upload_main input').on('change', function () {
+                        importf(this, function (source) {
+                            mainOrderSouce = source;
+                            $('.upload_main div').html('已上傳');
+                        })
+                    });
+                    $('.upload_second input').on('change', function () {
+                        importf(this, function (source) {
+                            secondOrderSouce = source;
+                            $('.upload_second div').html('已上傳');
+                        })
+                    });
+                    $('#landingPage .btnClose').on('click', e => {
+                        $('#landingPage').hide();
+                    });
+
+                    $('#compare').on('click', function () {
+                        //data preprocess
+                        var mainOrderObect = {};
+                        mainOrderSouce.forEach(o => {
+                            var plusSubname = (o['規格']) ? o['規格'] : '';
+                            compareName = (o['商品名稱'] + plusSubname).replace('黑名單｜分店資料', '')
+                            compareName = (compareName.length > 6) ? compareName.substr(6).trim() : compareName;
+
+                            if (Object.keys(mainOrderObect).indexOf(compareName) == -1) {
+                                mainOrderObect[compareName] = {
+                                    count: o.數量,
+                                    raw: [o]
+                                };
+                            } else {
+                                mainOrderObect[compareName].count += o.數量;
+                                mainOrderObect[compareName].raw.push(o)
+                            }
+                        });
+                        var secondOrderObect = {};
+                        secondOrderSouce.forEach(o => {
+                            var plusSubname = (o['款式']) ? o['款式'] : '';
+                            compareName = (o['商品名稱'] + plusSubname);
+                            compareName = (compareName.length > 7) ? compareName.substr(7).trim() : compareName;
+                            if (Object.keys(secondOrderObect).indexOf(compareName) == -1) {
+                                secondOrderObect[compareName] = {
+                                    count: o.數量,
+                                    raw: [o]
+                                };
+                            } else {
+                                secondOrderObect[compareName].count += o.數量;
+                                secondOrderObect[compareName].raw.push(o)
+                            }
+                        });
+                        var compareResult = [];
+                        var restOftarget = JSON.parse(JSON.stringify(secondOrderObect));
+                        Object.keys(mainOrderObect).forEach(o => {
+                            var matches = stringSimilarity.findBestMatch(o, Object.keys(secondOrderObect));
+
+                            compareResult.push([o, matches.bestMatch, mainOrderObect[o].count, secondOrderObect[matches.bestMatch.target].count]);
+                            delete restOftarget[matches.bestMatch.target];
+                            // restOftarget[matches.bestMatchIndex] = '';
+                            // restOftarget.splice(o.bestMatchIndex,1)
+                        })
+
+                        $.ajax({
+                            url: extendData.rawUrl + '/ui/orderCompare/table.html',
+                            async: false,
+                            cache: false
+                        }).then(function (data) {
+                            var htmlString = data;
+                            var htmlString2 = '';
+
+                            compareResult.sort(function (a, b) {
+                                return b[2] - a[2]
+                            }).sort(function (a, b) {
+                                return b[1].rating - a[1].rating
+                            }).forEach(o => {
+                                var selectedItem = o[1].target;
+                                var selectedItemCount = o[3];
+                                var nameLabel = 'normal';
+                                var noLikeItem = '';
+                                var isSameCount = '';
+
+                                if (o[2] != o[3]) {
+                                    isSameCount = '數量不一致';
+                                    nameLabel = 'warning';
+                                }
+
+                                if (o[1].rating == 0) {
+                                    nameLabel = 'warning';
+                                    noLikeItem = '無對應商品';
+                                    selectedItem = '';
+                                    selectedItemCount = '';
+                                    isSameCount = '';
+                                } else if (o[1].rating < 0.8) {
+                                    noLikeItem = '需確認';
+                                    nameLabel = 'warning';
+                                } else {
+                                    noLikeItem = '';
+                                }
+
+                                htmlString2 += `<tr name="${nameLabel}">
+                                                <td>${o[0]}</td>
+                                                <td>${selectedItem}</td>
+                                                <td>${(o[1].rating*100).toFixed()+'%'}</td>
+                                                <td>${o[2]}</td>
+                                                <td>${selectedItemCount}</td>
+                                                <td>${noLikeItem}</td>
+                                                <td>${isSameCount}</td>
+                                              </tr>`
+
+                            });
+                            Object.keys(restOftarget).forEach(o => {
+
+                                htmlString2 += `<tr name="warning">
+                                <td></td>
+                                <td>${o}</td>
+                                <td></td>
+                                <td></td>
+                                <td>${restOftarget[o].count}</td>
+                                <td>找不到對應</td>
+                                <td></td>
+                              </tr>`
+
+                            });
+
+
+                            htmlString = htmlString.replace('@htmlString2', htmlString2);
+                            $('.compareResult').html(htmlString);
+                        });
+
+                    });
+
+                    var isHide = false;
+                    $('#btnFilter').on('click', function () {
+                        if (isHide) {
+                            $('table tr[name="normal"]').show();
+                            isHide = false;
+                        } else {
+                            $('table tr[name="normal"]').hide();
+                            isHide = true;
+                        }
+                    })
+                });
+            }
+        }
+    }();
+
     switch (document.URL) {
         case 'https://www.iplusonego.com/seller/sellerordersearch':
             sellerordersearch.landing();
             break;
         case 'https://www.iplusonego.com/seller/sellercontainer':
             sellercontainer.landing();
+            break;
+        case 'https://www.iplusonego.com/seller/mainorder':
+            ordercontainer.landing();
             break;
     }
