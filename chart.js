@@ -1283,6 +1283,7 @@
                     $('.upload_main input').on('change', function () {
                         importf(this, function (source) {
                             mainOrderSouce = source;
+                            debugger
                             $('.upload_main div').html('已上傳');
                         })
                     });
@@ -1423,7 +1424,104 @@
             }
         }
     }();
+    var mainOrdercontainer = function () {
+        var allOrderData;
+        $(document).on('ajaxSend', function (t, e, n) {
+            e.done(function (t) {
+                if (t) {
+                    allOrderData = t;
+                }
+            })
+        });
+        var processData = function () {
+            var filterData = [];
+            var exportData = []
+            document.allOrderData = allOrderData.data.orders;
+            var o = [
+                '會員名稱',
+                '訂單編號',
+                '訂單狀態',
+                '商品名稱',
+                '規格',
+                '商品編號',
+                '數量',
+                '單價/VIP價',
+                '總價',
+                '訂單備註',
+                '訂單留言(若有)'
+            ]
+            exportData.push(o);
+            allOrderData.data.orders.filter(order => {
+                    var today = new Date();
+                    var from = new Date(getDateString(today) + ' ');
+                    from = new Date('2020-11-17');
+                    var to = new Date(from.getTime() + 86400000);
+                    to = new Date('2020-11-18');
+                    var date = new Date(order.order_status_change_time);
+                    return (date > from && date < to) ? true : false;
+                }).forEach(order => {
+                    //未總計
+                    filterData.push(order)
+                    // var o = {
+                    //     '會員名稱': '',
+                    //     '訂單編號': '',
+                    //     '訂單狀態': order.order_product_items[0].order_payment_status,
+                    //     '商品名稱': order.order_product_items[0].product_title,
+                    //     '規格': order.order_product_items[0].product_style_title,
+                    //     '商品編號': '',
+                    //     '數量': order.order_product_items[0].product_style_total_count,
+                    //     '單價/VIP價': order.order_product_items[0].product_sale,
+                    //     '總價': order.order_orig_subtotal_price,
+                    //     '訂單備註': '',
+                    //     '訂單留言(若有)': ''
+                    // }
+                    var o = ['',
+                        '',
+                        order.order_product_items[0].order_payment_status,
+                        order.order_product_items[0].product_title,
+                        order.order_product_items[0].product_style_title,
+                        '',
+                        order.order_product_items[0].product_style_total_count,
+                        order.order_product_items[0].product_sale,
+                        order.order_orig_subtotal_price,
+                        '',
+                        ''
+                    ]
+                    exportData.push(o);
+                }),
+                function (e, t) {
+                    for (var o = function (e) {
+                            for (var t = "", o = 0; o < e.length; o++) {
+                                var a = null === e[o] ? "" : e[o].toString();
+                                e[o] instanceof Date && (a = e[o].toLocaleString());
+                                var r = a.replace(/"/g, '""');
+                                r.search(/("|,|\n)/g) >= 0 && (r = '"' + r + '"'), o > 0 && (t += ","), t += r
+                            }
+                            return t + "\n"
+                        }, a = "", r = 0; r < t.length; r++) a += o(t[r]);
+                    var n = new Blob(["\ufeff" + a], {
+                        type: "text/csv;charset=utf-8"
+                    });
+                    if (navigator.msSaveBlob) navigator.msSaveBlob(n, e);
+                    else {
+                        var s = document.createElement("a");
+                        if (void 0 !== s.download) {
+                            var c = URL.createObjectURL(n);
+                            s.setAttribute("href", c), s.setAttribute("download", e), s.style.visibility = "hidden", document.body.appendChild(s), s.click(), document.body.removeChild(s)
+                        }
+                    }
+                }("今日訂購商品清單_" + (new Date).toLocaleDateString().replace(/\//g, "") + "_" + (new Date).toLocaleTimeString().slice(2, 7).replace(":", "") + ".csv", exportData)
+            console.log(exportData);
+            document.filterData = filterData;
+        }
 
+        return {
+            landing: function () {
+                main();
+                setTimeout(processData, 3000);
+            }
+        }
+    }();
     switch (document.URL) {
         case 'https://www.iplusonego.com/seller/sellerordersearch':
             sellerordersearch.landing();
@@ -1433,5 +1531,8 @@
             break;
         case 'https://www.iplusonego.com/seller/mainorder':
             ordercontainer.landing();
+            break;
+        case 'https://www.iplusonego.com/buyer/cart?seller=129712985182342':
+            mainOrdercontainer.landing();
             break;
     }
