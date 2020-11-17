@@ -1283,7 +1283,6 @@
                     $('.upload_main input').on('change', function () {
                         importf(this, function (source) {
                             mainOrderSouce = source;
-                            debugger
                             $('.upload_main div').html('已上傳');
                         })
                     });
@@ -1436,7 +1435,7 @@
         var processData = function () {
             var filterData = [];
             var exportData = []
-            document.allOrderData = allOrderData.data.orders;
+            document.allOrderData = allOrderData.data;
             var o = [
                 '會員名稱',
                 '訂單編號',
@@ -1450,14 +1449,15 @@
                 '訂單備註',
                 '訂單留言(若有)'
             ]
+            document.exportData = exportData;
             exportData.push(o);
-            allOrderData.data.orders.filter(order => {
+            allOrderData.data.filter(order => {
                     var today = new Date();
                     var from = new Date(getDateString(today) + ' ');
-                    from = new Date('2020-11-17');
+                    from = new Date('2020-11-17 ');
                     var to = new Date(from.getTime() + 86400000);
-                    to = new Date('2020-11-18');
-                    var date = new Date(order.order_status_change_time);
+                    to = new Date('2020-11-18 ');
+                    var date = new Date(order.order_checked_time + " UTC");
                     return (date > from && date < to) ? true : false;
                 }).forEach(order => {
                     //未總計
@@ -1475,19 +1475,37 @@
                     //     '訂單備註': '',
                     //     '訂單留言(若有)': ''
                     // }
-                    var o = ['',
-                        '',
-                        order.order_product_items[0].order_payment_status,
-                        order.order_product_items[0].product_title,
-                        order.order_product_items[0].product_style_title,
-                        '',
-                        order.order_product_items[0].product_style_total_count,
-                        order.order_product_items[0].product_sale,
-                        order.order_orig_subtotal_price,
-                        '',
-                        ''
-                    ]
-                    exportData.push(o);
+                    if (order.order_product_items.length == 1) {
+                        var o = ['',
+                            '',
+                            order.order_payment_status,
+                            order.order_product_items[0].product_title,
+                            order.order_product_items[0].product_style_title,
+                            '',
+                            order.order_product_items[0].product_style_count,
+                            order.order_product_items[0].product_sale,
+                            order.order_orig_subtotal_price,
+                            '',
+                            ''
+                        ]
+                        exportData.push(o);
+                    } else {
+                        order.order_product_items.forEach(e => {
+                            var o = ['',
+                                '',
+                                order.order_payment_status,
+                                e.product_title,
+                                e.product_style_title,
+                                '',
+                                e.product_style_count,
+                                e.product_sale,
+                                e.product_sale,
+                                '',
+                                ''
+                            ]
+                            exportData.push(o);
+                        });
+                    }
                 }),
                 function (e, t) {
                     for (var o = function (e) {
@@ -1518,7 +1536,7 @@
         return {
             landing: function () {
                 main();
-                setTimeout(processData, 3000);
+                setTimeout(processData, 15000);
             }
         }
     }();
@@ -1532,7 +1550,7 @@
         case 'https://www.iplusonego.com/seller/mainorder':
             ordercontainer.landing();
             break;
-        case 'https://www.iplusonego.com/buyer/cart?seller=129712985182342':
+        case 'https://www.iplusonego.com/buyer/orders?seller=129712985182342':
             mainOrdercontainer.landing();
             break;
     }
