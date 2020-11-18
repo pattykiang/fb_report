@@ -202,6 +202,7 @@
                         storeOwner: order.order_product_items[0].product_title.substr(0, 1),
                         item: order.post_snapshot_title,
                         sum: order.order_total_price * 1,
+                        count:order.order_product_items.reduce(function (acc, obj) { return acc + obj.product_style_count; }, 0),
                         user: order.user_fb_name
                     })
 
@@ -299,7 +300,7 @@
 
                 var store_sale = [];
 
-                dataList
+                var dataList_nor = dataList
                     .filter(data => {
                         return monthStringList.indexOf(data.monthString) >= 0
                     })
@@ -307,27 +308,42 @@
                         return storeOwnerList.indexOf(data.storeOwner) >= 0
                     })
                     .map(data => {
+                        var obj ={};
                         var list = data.item.split('|')
                         var name = list[list.length - 1].trim();
-                        data.itemCode = name.substr(0, 6);
-                        data.itemLabel = name.slice(6);
-                        return data;
-                    }).forEach(data => {
-                        var _itemIndex = store_sale.map(function (e) {
-                            return e.code;
-                        }).indexOf(data.itemCode);
-                        if (_itemIndex >= 0) {
-                            store_sale[_itemIndex].y += data.sum;
-                            store_sale[_itemIndex].z += 1;
-                        } else {
-                            store_sale.push({
-                                name: data.itemLabel,
-                                code: data.itemCode,
-                                y: data.sum,
-                                z: 1
-                            });
-                        }
-                    })
+                        obj.item = data.item;
+                        obj.name = name;
+                        obj.count = data.count;
+                        obj.sum = data.sum;
+                        obj.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
+                        obj.itemLabel = name.slice(6);
+                        // var list = data.item.split('|')
+                        // var name = list[list.length - 1].trim();
+                        // data.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
+                        // data.itemLabel = name.slice(6);
+                        // return data;
+                        return obj;
+                    });
+                dataList_nor.forEach(data => {
+
+                    var _itemIndex = store_sale.map(function (e) {
+                        return e.code;
+                    }).indexOf(data.itemCode);
+
+                    if (_itemIndex >= 0) {
+                        store_sale[_itemIndex].y += data.sum;
+                        store_sale[_itemIndex].z += data.count;
+                        // store_sale[_itemIndex].z += 1; 幾單
+                    } else {
+                        store_sale.push({
+                            name: data.itemLabel,
+                            code: data.itemCode,
+                            y: data.sum,
+                            z: data.count
+                            // z: 1
+                        });
+                    }
+                })
                 store_sale.sort(function (a, b) {
                     return b.z - a.z
                 });
