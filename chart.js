@@ -202,6 +202,7 @@
                         storeOwner: order.order_product_items[0].product_title.substr(0, 1),
                         item: order.post_snapshot_title,
                         sum: order.order_total_price * 1,
+                        count:order.order_product_items.reduce(function (acc, obj) { return acc + obj.product_style_count; }, 0),
                         user: order.user_fb_name
                     })
 
@@ -299,7 +300,7 @@
 
                 var store_sale = [];
 
-                dataList
+                var dataList_nor = dataList
                     .filter(data => {
                         return monthStringList.indexOf(data.monthString) >= 0
                     })
@@ -307,27 +308,42 @@
                         return storeOwnerList.indexOf(data.storeOwner) >= 0
                     })
                     .map(data => {
+                        var obj ={};
                         var list = data.item.split('|')
                         var name = list[list.length - 1].trim();
-                        data.itemCode = name.substr(0, 6);
-                        data.itemLabel = name.slice(6);
-                        return data;
-                    }).forEach(data => {
-                        var _itemIndex = store_sale.map(function (e) {
-                            return e.code;
-                        }).indexOf(data.itemCode);
-                        if (_itemIndex >= 0) {
-                            store_sale[_itemIndex].y += data.sum;
-                            store_sale[_itemIndex].z += 1;
-                        } else {
-                            store_sale.push({
-                                name: data.itemLabel,
-                                code: data.itemCode,
-                                y: data.sum,
-                                z: 1
-                            });
-                        }
-                    })
+                        obj.item = data.item;
+                        obj.name = name;
+                        obj.count = data.count;
+                        obj.sum = data.sum;
+                        obj.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
+                        obj.itemLabel = name.slice(6);
+                        // var list = data.item.split('|')
+                        // var name = list[list.length - 1].trim();
+                        // data.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
+                        // data.itemLabel = name.slice(6);
+                        // return data;
+                        return obj;
+                    });
+                dataList_nor.forEach(data => {
+
+                    var _itemIndex = store_sale.map(function (e) {
+                        return e.code;
+                    }).indexOf(data.itemCode);
+
+                    if (_itemIndex >= 0) {
+                        store_sale[_itemIndex].y += data.sum;
+                        store_sale[_itemIndex].z += data.count;
+                        // store_sale[_itemIndex].z += 1; 幾單
+                    } else {
+                        store_sale.push({
+                            name: data.itemLabel,
+                            code: data.itemCode,
+                            y: data.sum,
+                            z: data.count
+                            // z: 1
+                        });
+                    }
+                })
                 store_sale.sort(function (a, b) {
                     return b.z - a.z
                 });
@@ -1423,7 +1439,123 @@
             }
         }
     }();
+    var mainOrdercontainer = function () {
+        var allOrderData;
+        $(document).on('ajaxSend', function (t, e, n) {
+            e.done(function (t) {
+                if (t) {
+                    allOrderData = t;
+                }
+            })
+        });
+        var processData = function () {
+            var filterData = [];
+            var exportData = []
+            document.allOrderData = allOrderData.data;
+            var o = [
+                '會員名稱',
+                '訂單編號',
+                '訂單狀態',
+                '商品名稱',
+                '規格',
+                '商品編號',
+                '數量',
+                '單價/VIP價',
+                '總價',
+                '訂單備註',
+                '訂單留言(若有)'
+            ]
+            document.exportData = exportData;
+            exportData.push(o);
+            allOrderData.data.filter(order => {
+                    var today = new Date();
+                    var from = new Date(getDateString(today) + ' ');
+                    from = new Date('2020-11-17 ');
+                    var to = new Date(from.getTime() + 86400000);
+                    to = new Date('2020-11-18 ');
+                    var date = new Date(order.order_checked_time + " UTC");
+                    return (date > from && date < to) ? true : false;
+                }).forEach(order => {
+                    //未總計
+                    filterData.push(order)
+                    // var o = {
+                    //     '會員名稱': '',
+                    //     '訂單編號': '',
+                    //     '訂單狀態': order.order_product_items[0].order_payment_status,
+                    //     '商品名稱': order.order_product_items[0].product_title,
+                    //     '規格': order.order_product_items[0].product_style_title,
+                    //     '商品編號': '',
+                    //     '數量': order.order_product_items[0].product_style_total_count,
+                    //     '單價/VIP價': order.order_product_items[0].product_sale,
+                    //     '總價': order.order_orig_subtotal_price,
+                    //     '訂單備註': '',
+                    //     '訂單留言(若有)': ''
+                    // }
+                    if (order.order_product_items.length == 1) {
+                        var o = ['',
+                            '',
+                            order.order_payment_status,
+                            order.order_product_items[0].product_title,
+                            order.order_product_items[0].product_style_title,
+                            '',
+                            order.order_product_items[0].product_style_count,
+                            order.order_product_items[0].product_sale,
+                            order.order_orig_subtotal_price,
+                            '',
+                            ''
+                        ]
+                        exportData.push(o);
+                    } else {
+                        order.order_product_items.forEach(e => {
+                            var o = ['',
+                                '',
+                                order.order_payment_status,
+                                e.product_title,
+                                e.product_style_title,
+                                '',
+                                e.product_style_count,
+                                e.product_sale,
+                                e.product_sale,
+                                '',
+                                ''
+                            ]
+                            exportData.push(o);
+                        });
+                    }
+                }),
+                function (e, t) {
+                    for (var o = function (e) {
+                            for (var t = "", o = 0; o < e.length; o++) {
+                                var a = null === e[o] ? "" : e[o].toString();
+                                e[o] instanceof Date && (a = e[o].toLocaleString());
+                                var r = a.replace(/"/g, '""');
+                                r.search(/("|,|\n)/g) >= 0 && (r = '"' + r + '"'), o > 0 && (t += ","), t += r
+                            }
+                            return t + "\n"
+                        }, a = "", r = 0; r < t.length; r++) a += o(t[r]);
+                    var n = new Blob(["\ufeff" + a], {
+                        type: "text/csv;charset=utf-8"
+                    });
+                    if (navigator.msSaveBlob) navigator.msSaveBlob(n, e);
+                    else {
+                        var s = document.createElement("a");
+                        if (void 0 !== s.download) {
+                            var c = URL.createObjectURL(n);
+                            s.setAttribute("href", c), s.setAttribute("download", e), s.style.visibility = "hidden", document.body.appendChild(s), s.click(), document.body.removeChild(s)
+                        }
+                    }
+                }("今日訂購商品清單_" + (new Date).toLocaleDateString().replace(/\//g, "") + "_" + (new Date).toLocaleTimeString().slice(2, 7).replace(":", "") + ".csv", exportData)
+            console.log(exportData);
+            document.filterData = filterData;
+        }
 
+        return {
+            landing: function () {
+                main();
+                setTimeout(processData, 15000);
+            }
+        }
+    }();
     switch (document.URL) {
         case 'https://www.iplusonego.com/seller/sellerordersearch':
             sellerordersearch.landing();
@@ -1433,5 +1565,8 @@
             break;
         case 'https://www.iplusonego.com/seller/mainorder':
             ordercontainer.landing();
+            break;
+        case 'https://www.iplusonego.com/buyer/orders?seller=129712985182342':
+            mainOrdercontainer.landing();
             break;
     }
