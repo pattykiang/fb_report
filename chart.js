@@ -297,7 +297,6 @@
             };
             var _showHot = function (dataList, monthStringList, storeOwnerList) {
                 //內容//總價//總數
-
                 var store_sale = [];
 
                 var dataList_nor = dataList
@@ -315,8 +314,11 @@
                         obj.name = name;
                         obj.count = data.count;
                         obj.sum = data.sum;
-                        obj.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
-                        obj.itemLabel = name.slice(6);
+                        var matchResult = data.item.match(/\d{6}/);
+                        if(matchResult){
+                            obj.itemCode = matchResult[0];//name.substr(0, 6);
+                            obj.itemLabel = name.slice(6);
+                        }
                         // var list = data.item.split('|')
                         // var name = list[list.length - 1].trim();
                         // data.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
