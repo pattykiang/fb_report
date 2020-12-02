@@ -783,14 +783,14 @@
                                 ${htmlString}
                                 </table></body></html>`;
                             } else {
+                                //所有未付款
                                 dataList[func].data.forEach(data => {
-
                                     whichClub = data.order_product_items[0].product_title[0];
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
                                     htmlString += `<tr>
                                             <td>${whichClub}</td>
-                                            <td><a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">${data.user_fb_name}</a></td>
+                                            <td><a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
                                             <td>${comment_html}</td>
                                             <td>${data.order_product_items.length}</td>
                                             <td>${toCurrency(data.order_total_price)}</td>
@@ -1547,7 +1547,7 @@
                         }
                     }
                 }("今日訂購商品清單_" + (new Date).toLocaleDateString().replace(/\//g, "") + "_" + (new Date).toLocaleTimeString().slice(2, 7).replace(":", "") + ".csv", exportData)
-            console.log(exportData);
+            // console.log(exportData);
             document.filterData = filterData;
         }
 
