@@ -585,7 +585,7 @@
                 }
 
                 var data = getTraceOrderWithPeriod(extendData.order_data, startDate, endDate);
-                document.orderTrace = data;
+                extendData.orderTrace = data;
                 UIControl.initTrace(mode, data);
             }
             return {
@@ -754,14 +754,28 @@
                                 dataList[func].data.filter(data => {
                                     return data.user_fb_profile_id == fb_id
                                 }).forEach(data => {
-
+                                    debugger
                                     whichClub = data.order_product_items[0].product_title[0];
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
+                                    //1
+                                    var orderCount ='--';
+                                    if(data.order_product_items.length==1){
+                                        //單筆
+                                        orderCount = data.order_product_items[0].product_style_count;
+                                    }
+                                    else if(isNaN(data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b))){
+                                        //無product_style_count
+                                        orderCount = data.order_product_items.length
+                                    }else{
+                                        orderCount = data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b)
+                                    }
+                                  
+                                   
                                     htmlString += `<tr>
                                             <td>${data.user_fb_name}</td>
                                             <td>${comment_html}</td>
-                                            <td>${data.order_product_items.length}</td>
+                                            <td>${orderCount}</td>
                                             <td>${toCurrency(data.order_total_price)}</td>
                                             <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
                                         </tr>`
@@ -788,11 +802,23 @@
                                     whichClub = data.order_product_items[0].product_title[0];
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
+                                    var orderCount ='--';
+                                    if(data.order_product_items.length==1){
+                                        //單筆
+                                        orderCount = data.order_product_items[0].product_style_count;
+                                    }
+                                    else if(isNaN(data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b))){
+                                        //無product_style_count
+                                        orderCount = data.order_product_items.length
+                                    }else{
+                                        orderCount = data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b)
+                                    }
+
                                     htmlString += `<tr>
                                             <td>${whichClub}</td>
                                             <td><a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
                                             <td>${comment_html}</td>
-                                            <td>${data.order_product_items.length}</td>
+                                            <td>${orderCount}</td>
                                             <td>${toCurrency(data.order_total_price)}</td>
                                             <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
                                         </tr>`
