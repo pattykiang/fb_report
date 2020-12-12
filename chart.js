@@ -748,13 +748,12 @@
                             var fb_id = e.currentTarget.name;
                             var htmlString = '';
 
-
                             if (fb_id != 'all') {
                                 var whichClub = '';
                                 dataList[func].data.filter(data => {
                                     return data.user_fb_profile_id == fb_id
                                 }).forEach(data => {
-                                    debugger
+
                                     whichClub = data.order_product_items[0].product_title[0];
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
