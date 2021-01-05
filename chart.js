@@ -213,7 +213,6 @@
                 var store_sale = new Array(storeOwnerList.length).fill(0);
                 var store_order = new Array(storeOwnerList.length).fill(0);
                 var store_uu = new Array(storeOwnerList.length).fill().map(u => ([]));
-                debugger
                 dataList.filter(data => {
                     return data.dateString == dateString
                 }).forEach(data => {
@@ -230,7 +229,6 @@
                 UIControl.changSelectDay(dateString, storeOwnerList, store_sale, store_order, store_uu);
             };
             var _showPerHour = function (dataList, dateString, storeOwnerList) {
-                debugger
                 var store_sale = [];
                 var store_order = [];
                 storeOwnerList.forEach(owner => {
