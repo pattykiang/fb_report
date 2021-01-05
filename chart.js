@@ -2,7 +2,7 @@
         if (type == 'm') {
             return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0') + (date.getMonth() + 1).toString();
         }
-        return date.getFullYear().toString() + '-' + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
+        return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0')+(date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
 
     function toCurrency(num) {
@@ -213,7 +213,7 @@
                 var store_sale = new Array(storeOwnerList.length).fill(0);
                 var store_order = new Array(storeOwnerList.length).fill(0);
                 var store_uu = new Array(storeOwnerList.length).fill().map(u => ([]));
-
+                debugger
                 dataList.filter(data => {
                     return data.dateString == dateString
                 }).forEach(data => {
@@ -230,7 +230,7 @@
                 UIControl.changSelectDay(dateString, storeOwnerList, store_sale, store_order, store_uu);
             };
             var _showPerHour = function (dataList, dateString, storeOwnerList) {
-
+                debugger
                 var store_sale = [];
                 var store_order = [];
                 storeOwnerList.forEach(owner => {
@@ -349,6 +349,11 @@
                 store_sale.sort(function (a, b) {
                     return b.z - a.z
                 });
+                // document.a = store_sale;
+                // store_sale.map(e=>{
+                //     console.log(e.name+','+e.y+','+e.z)
+                // })
+                //console.log(store_sale);
                 store_sale = store_sale.slice(0, 10);
                 UIControl.ShowSelectHotItem(store_sale);
             };
