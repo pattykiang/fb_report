@@ -2,7 +2,7 @@
         if (type == 'm') {
             return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0') + (date.getMonth() + 1).toString();
         }
-        return date.getFullYear().toString() + '-' + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
+        return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0')+(date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
 
     function toCurrency(num) {
@@ -213,7 +213,7 @@
                 var store_sale = new Array(storeOwnerList.length).fill(0);
                 var store_order = new Array(storeOwnerList.length).fill(0);
                 var store_uu = new Array(storeOwnerList.length).fill().map(u => ([]));
-
+                debugger
                 dataList.filter(data => {
                     return data.dateString == dateString
                 }).forEach(data => {
@@ -230,7 +230,7 @@
                 UIControl.changSelectDay(dateString, storeOwnerList, store_sale, store_order, store_uu);
             };
             var _showPerHour = function (dataList, dateString, storeOwnerList) {
-
+                debugger
                 var store_sale = [];
                 var store_order = [];
                 storeOwnerList.forEach(owner => {
@@ -349,6 +349,11 @@
                 store_sale.sort(function (a, b) {
                     return b.z - a.z
                 });
+                // document.a = store_sale;
+                // store_sale.map(e=>{
+                //     console.log(e.name+','+e.y+','+e.z)
+                // })
+                //console.log(store_sale);
                 store_sale = store_sale.slice(0, 10);
                 UIControl.ShowSelectHotItem(store_sale);
             };
@@ -748,13 +753,12 @@
                             var fb_id = e.currentTarget.name;
                             var htmlString = '';
 
-
                             if (fb_id != 'all') {
                                 var whichClub = '';
                                 dataList[func].data.filter(data => {
                                     return data.user_fb_profile_id == fb_id
                                 }).forEach(data => {
-                                    debugger
+
                                     whichClub = data.order_product_items[0].product_title[0];
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
