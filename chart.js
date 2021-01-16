@@ -2,7 +2,7 @@
         if (type == 'm') {
             return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0') + (date.getMonth() + 1).toString();
         }
-        return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0')+(date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
+        return date.getFullYear().toString() + '-' + (date.getMonth() > 8 ? '' : '0') + (date.getMonth() + 1).toString() + '-' + (date.getDate() > 9 ? '' : '0') + date.getDate().toString();
     }
 
     function toCurrency(num) {
@@ -202,7 +202,9 @@
                         storeOwner: order.order_product_items[0].product_title.substr(0, 1),
                         item: order.post_snapshot_title,
                         sum: order.order_total_price * 1,
-                        count:order.order_product_items.reduce(function (acc, obj) { return acc + obj.product_style_count; }, 0),
+                        count: order.order_product_items.reduce(function (acc, obj) {
+                            return acc + obj.product_style_count;
+                        }, 0),
                         user: order.user_fb_name
                     })
 
@@ -305,7 +307,7 @@
                         return storeOwnerList.indexOf(data.storeOwner) >= 0
                     })
                     .map(data => {
-                        var obj ={};
+                        var obj = {};
                         var list = data.item.split('|')
                         var name = list[list.length - 1].trim();
                         obj.item = data.item;
@@ -313,8 +315,8 @@
                         obj.count = data.count;
                         obj.sum = data.sum;
                         var matchResult = data.item.match(/\d{6}/);
-                        if(matchResult){
-                            obj.itemCode = matchResult[0];//name.substr(0, 6);
+                        if (matchResult) {
+                            obj.itemCode = matchResult[0]; //name.substr(0, 6);
                             obj.itemLabel = name.slice(6);
                         }
                         // var list = data.item.split('|')
@@ -750,99 +752,62 @@
                             var func = $(e.currentTarget).attr('func');
                             var fb_id = e.currentTarget.name;
                             var htmlString = '';
+                            var htmlPersonal = '';
+                            var whichClub = '';
 
-                            if (fb_id != 'all') {
-                                var whichClub = '';
-                                dataList[func].data.filter(data => {
-                                    return data.user_fb_profile_id == fb_id
-                                }).forEach(data => {
+                            dataList[func].data.filter(data => {
+                                return data.user_fb_profile_id == fb_id || fb_id == 'all'
+                            }).forEach(data => {
 
                                     whichClub = data.order_product_items[0].product_title[0];
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
-                                    //1
-                                    var orderCount ='--';
-                                    if(data.order_product_items.length==1){
-                                        //單筆
-                                        orderCount = data.order_product_items[0].product_style_count;
-                                    }
-                                    else if(isNaN(data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b))){
-                                        //無product_style_count
-                                        orderCount = data.order_product_items.length
-                                    }else{
-                                        orderCount = data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b)
-                                    }
-                                  
-                                   
-                                    htmlString += `<tr>
+                                    var comment_style = ''
+                                    var orderCount = '--';
+                                    var orderCount_fill = '--'
+
+                                    data.order_product_items.map(function(e){
+                                     
+                                        orderCount = e.product_style_count;
+                                        orderCount_fill = e.product_style_filled;
+                                        comment_style = e.product_style_title;
+
+                                        htmlString += `<tr>
                                             <td>${data.user_fb_name}</td>
                                             <td>${comment_html}</td>
+                                            <td>${comment_style}</td>
                                             <td>${orderCount}</td>
-                                            <td>${toCurrency(data.order_total_price)}</td>
+                                            <td>${orderCount_fill}</td>
+                                            <td>${toCurrency(e.product_sale*orderCount)}</td>
                                             <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
-                                        </tr>`
+                                        </tr>`;
+                                    })
+
                                 });
+                                if (fb_id != 'all') {
+                                    htmlPersonal  = `<h3>該成員社團為：${whichClub}</h3>
+                                    <a href="https://www.facebook.com/${fb_id}" target="_blank">個人臉書</a>
+                                    <a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">曉貳訊息</a>
+                                    <hr/>`
+                                }
+
                                 htmlString = `<html><head><title></title></head>
                                 <body>
-                                <h3>該成員社團為：${whichClub}</h3>
-                                <a href="https://www.facebook.com/${fb_id}" target="_blank">個人臉書</a>
-                                <a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">曉貳訊息</a>
-                                <hr/>
+                                ${htmlPersonal}
                                 <table style='font-size:20px;border-spacing:10px;'>
                                 <tr>
                                     <td>會員名稱</td>
                                     <td>團名</td>
-                                    <td>數量</td>
+                                    <td>規格</td>
+                                    <td>訂購量</td>
+                                    <td>已配貨</td>
                                     <td>小計</td>
                                     <td>確認時間</td>
                                 </tr>
                                 ${htmlString}
                                 </table></body></html>`;
-                            } else {
-                                //所有未付款
-                                dataList[func].data.forEach(data => {
-                                    whichClub = data.order_product_items[0].product_title[0];
-                                    var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
-                                    var orderCount ='--';
-                                    if(data.order_product_items.length==1){
-                                        //單筆
-                                        orderCount = data.order_product_items[0].product_style_count;
-                                    }
-                                    else if(isNaN(data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b))){
-                                        //無product_style_count
-                                        orderCount = data.order_product_items.length
-                                    }else{
-                                        orderCount = data.order_product_items.map(e=>e.product_style_count).reduce((a,b)=>a+b)
-                                    }
-
-                                    htmlString += `<tr>
-                                            <td>${whichClub}</td>
-                                            <td><a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a></td>
-                                            <td>${comment_html}</td>
-                                            <td>${orderCount}</td>
-                                            <td>${toCurrency(data.order_total_price)}</td>
-                                            <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
-                                        </tr>`
-                                });
-                                htmlString = `<html><head><title></title></head>
-                                <body>
-                                <table style='font-size:20px;border-spacing:10px;'>
-                                <tr>
-                                    <td>下單社團</td>
-                                    <td>會員名稱</td>
-                                    <td>團名</td>
-                                    <td>數量</td>
-                                    <td>小計</td>
-                                    <td>確認時間</td>
-                                    <td>確認狀態</td>
-                                    <td>備註</td>
-                                </tr>
-                                ${htmlString}
-                                </table></body></html>`;
-                            }
-
-                            var wnd = window.open("about:blank", '', config = 'height=500px,width=1100px');
+                            var wnd = window.open("about:blank", '', config = 'height=500px,width=1200px');
                             wnd.document.write(htmlString);
                         })
                     });
