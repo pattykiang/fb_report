@@ -760,6 +760,7 @@
                             }).forEach(data => {
 
                                     whichClub = data.order_product_items[0].product_title[0];
+                                    var personal_html =  `<a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a>`;
                                     var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
                                     var comment_style = ''
@@ -773,7 +774,8 @@
                                         comment_style = e.product_style_title;
 
                                         htmlString += `<tr>
-                                            <td>${data.user_fb_name}</td>
+                                            <td>${whichClub}</td>
+                                            <td>${personal_html}</td>
                                             <td>${comment_html}</td>
                                             <td>${comment_style}</td>
                                             <td>${orderCount}</td>
@@ -796,6 +798,7 @@
                                 ${htmlPersonal}
                                 <table style='font-size:20px;border-spacing:10px;'>
                                 <tr>
+                                    <td>社團</td>
                                     <td>會員名稱</td>
                                     <td>團名</td>
                                     <td>規格</td>
