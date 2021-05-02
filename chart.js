@@ -211,100 +211,98 @@
                 })
                 document.forChartData = forChartData;
             }
-            var _showSingleDay = function (dataList, dateString, storeOwnerList) {
-                var store_sale = new Array(storeOwnerList.length).fill(0);
-                var store_order = new Array(storeOwnerList.length).fill(0);
-                var store_uu = new Array(storeOwnerList.length).fill().map(u => ([]));
+            var _showSingleDay = function (dataList, dateString, storeOwnerList = []) {
+                var store_sale = [0]; //new Array(storeOwnerList.length).fill(0);
+                var store_order = [0]; //new Array(storeOwnerList.length).fill(0);
+                var store_uu = [
+                    []
+                ]; //new Array(storeOwnerList.length).fill().map(u => ([]));
                 dataList.filter(data => {
                     return data.dateString == dateString
                 }).forEach(data => {
-                    var _index = storeOwnerList.indexOf(data.storeOwner);
-                    if (_index >= 0) {
-                        store_sale[_index] += data.sum;
-                        store_order[_index] += 1;
-                        store_uu[_index].push(data.user);
-                    }
+                    var _index = 0; //storeOwnerList.indexOf(data.storeOwner);
+                    // if (_index >= 0) {
+                    store_sale[_index] += data.sum;
+                    store_order[_index] += 1;
+                    store_uu[_index].push(data.user);
+                    // }
                 })
                 store_uu = store_uu.map(data => {
                     return [...new Set(data)].length;
                 })
                 UIControl.changSelectDay(dateString, storeOwnerList, store_sale, store_order, store_uu);
             };
-            var _showPerHour = function (dataList, dateString, storeOwnerList) {
+            var _showPerHour = function (dataList, dateString, storeOwnerList = []) {
                 var store_sale = [];
                 var store_order = [];
-                storeOwnerList.forEach(owner => {
-                    store_sale.push({
-                        name: owner + '_銷量',
-                        visible: (owner == 'P') ? true : false,
-                        data: new Array(24).fill(0)
-                    })
-                    store_order.push({
-                        name: owner + '_單數',
-                        visible: (owner == 'P') ? true : false,
-                        data: new Array(24).fill(0)
-                    })
+                // storeOwnerList.forEach(owner => {
+                store_sale.push({
+                    name: '有家日常_銷量',
+                    visible: true,
+                    data: new Array(24).fill(0)
                 })
+                store_order.push({
+                    name: '有家日常_單數',
+                    visible: true,
+                    data: new Array(24).fill(0)
+                })
+                // })
                 dataList.filter(data => {
                     return data.dateString == dateString
                 }).forEach(data => {
-                    var _index = storeOwnerList.indexOf(data.storeOwner);
-                    if (_index >= 0) {
-                        store_sale[_index].data[data.hourString] += data.sum;
-                        store_order[_index].data[data.hourString] += 1;
-                    }
+                    var _index = 0; //storeOwnerList.indexOf(data.storeOwner);
+                    // if (_index >= 0) {
+                    store_sale[_index].data[data.hourString] += data.sum;
+                    store_order[_index].data[data.hourString] += 1;
+                    // }
                 })
                 UIControl.showSelectDayPerHour(dateString, store_sale.concat(store_order));
             };
-            var _showPerDay = function (dataList, dayStringList, storeOwnerList) {
+            var _showPerDay = function (dataList, dayStringList, storeOwnerList = []) {
                 var store_sale = [];
-                storeOwnerList.forEach(owner => {
-                    store_sale.push({
-                        name: owner,
-                        data: new Array(dayStringList.length).fill(0)
-                    })
+                // storeOwnerList.forEach(owner => {
+                store_sale.push({
+                    name: '有家日常',
+                    data: new Array(dayStringList.length).fill(0)
                 })
+                // })
                 dataList.filter(data => {
                     return dayStringList.indexOf(data.dateString) >= 0
                 }).forEach(data => {
-                    var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
+                    // var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
                     var _dateIndex = dayStringList.indexOf(data.dateString);
-                    if (_ownerIndex >= 0 && _dateIndex >= 0) {
-                        store_sale[_ownerIndex].data[_dateIndex] += data.sum;
+                    if (_dateIndex >= 0) {
+                        store_sale[0].data[_dateIndex] += data.sum;
                     }
                 })
 
                 UIControl.showSelectPerDay(dayStringList, store_sale);
             };
-            var _showPerMonth = function (dataList, monthStringList, storeOwnerList) {
+            var _showPerMonth = function (dataList, monthStringList, storeOwnerList = []) {
                 var store_sale = [];
-                storeOwnerList.forEach(owner => {
-                    store_sale.push({
-                        name: owner,
-                        data: new Array(monthStringList.length).fill(0)
-                    })
+                // storeOwnerList.forEach(owner => {
+                store_sale.push({
+                    name: '有家日常',
+                    data: new Array(monthStringList.length).fill(0)
                 })
+                // })
                 dataList.filter(data => {
                     return monthStringList.indexOf(data.monthString) >= 0
                 }).forEach(data => {
-                    var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
+                    // var _ownerIndex = storeOwnerList.indexOf(data.storeOwner);
                     var _dateIndex = monthStringList.indexOf(data.monthString);
-                    if (_ownerIndex >= 0 && _dateIndex >= 0) {
-                        store_sale[_ownerIndex].data[_dateIndex] += data.sum;
+                    if (_dateIndex >= 0) {
+                        store_sale[0].data[_dateIndex] += data.sum;
                     }
                 })
                 UIControl.ShowSelectPerMonth(monthStringList, store_sale);
             };
-            var _showHot = function (dataList, monthStringList, storeOwnerList) {
+            var _showHot = function (dataList, monthStringList, storeOwnerList = []) {
                 //內容//總價//總數
                 var store_sale = [];
-
                 var dataList_nor = dataList
                     .filter(data => {
                         return monthStringList.indexOf(data.monthString) >= 0
-                    })
-                    .filter(data => {
-                        return storeOwnerList.indexOf(data.storeOwner) >= 0
                     })
                     .map(data => {
                         var obj = {};
@@ -314,16 +312,11 @@
                         obj.name = name;
                         obj.count = data.count;
                         obj.sum = data.sum;
-                        var matchResult = data.item.match(/\d{6}/);
+                        var matchResult = data.item.match(/\d{5}/);
                         if (matchResult) {
                             obj.itemCode = matchResult[0]; //name.substr(0, 6);
-                            obj.itemLabel = name.slice(6);
+                            obj.itemLabel = name.slice(5);
                         }
-                        // var list = data.item.split('|')
-                        // var name = list[list.length - 1].trim();
-                        // data.itemCode = data.item.match(/\d{6}/)[0];//name.substr(0, 6);
-                        // data.itemLabel = name.slice(6);
-                        // return data;
                         return obj;
                     });
                 dataList_nor.forEach(data => {
@@ -357,56 +350,33 @@
                 store_sale = store_sale.slice(0, 10);
                 UIControl.ShowSelectHotItem(store_sale);
             };
-            var _showReport = function (dataList, dateString, storeOwnerList) {
+            var _showReport = function (dataList, dateString, storeOwnerList = []) {
 
-                var store_single = new Array(4).fill().map(o => ({
+                var store_single = new Array(2).fill().map(o => ({
                     label: '',
                     sum: 0
                 }));
-                var store_month = new Array(5).fill().map(o => ({
+                var store_month = new Array(2).fill().map(o => ({
                     label: '',
                     sum: 0
                 }));
 
                 store_single[0].label = "(" + dateString + ")";
-                store_single[1].label = '媽媽裸績';
-                store_single[2].label = '二店裸績';
-                store_single[3].label = '小黑裸績';
+                store_single[1].label = '有家日常裸績';
 
                 store_month[0].label = "(" + dateString.substr(0, dateString.length - 3) + "月累積)";
-                store_month[1].label = '媽媽裸績';
-                store_month[2].label = '二店裸績';
-                store_month[3].label = '小黑裸績';
-                store_month[4].label = '全部心血';
+                store_month[1].label = '有家日常裸績';
 
-                dataList.filter(data => storeOwnerList.indexOf(data.storeOwner) >= 0).forEach(data => {
-                    var _ownerIndex = -1;
-                    switch (data.storeOwner) {
-                        case 'V':
-                        case 'C':
-                        case 'L':
-                            _ownerIndex = 1;
-                            break;
-                        case 'P':
-                            _ownerIndex = 2;
-                            break;
-                        case 'H':
-                            _ownerIndex = 3;
-                            break;
-                        case 'B':
-                        case '特':
-                            break;
+                dataList.forEach(data => {
+
+                    //當日
+                    if (data.dateString == dateString) {
+                        store_single[1].sum += data.sum;
                     }
-                    if (_ownerIndex >= 0) {
-                        //當日
-                        if (data.dateString == dateString) {
-                            store_single[_ownerIndex].sum += data.sum;
-                        }
-                        //累積當月至當日
-                        if (data.dateString <= dateString) {
-                            store_month[_ownerIndex].sum += data.sum;
-                            store_month[4].sum += data.sum;
-                        }
+                    //累積當月至當日
+                    if (data.dateString <= dateString) {
+                        store_month[1].sum += data.sum;
+                        // store_month[4].sum += data.sum;
                     }
                 });
                 UIControl.ShowSelectReport(store_single, store_month);
@@ -431,14 +401,14 @@
 
                 var endDay = new Date($('#searchDateE').val());
                 var selectDay = getDateString(endDay);
-                var selectOwner = $('input[name="owner"]:checked').map(function () {
-                    return $(this).val()
-                }).get();
+                // var selectOwner = $('input[name="owner"]:checked').map(function () {
+                //     return $(this).val()
+                // }).get();
                 var selectTab = $('#adv li .active').attr('name');
 
                 var selectedObj = {
                     Day: selectDay,
-                    Owner: selectOwner,
+                    Owner: [],
                     DayList: selectDaysList,
                     MonthList: selectMonthsList,
                     Mode: selectTab
@@ -642,18 +612,18 @@
                         $('#landingPage').show();
                     });
 
-                    $('input[name="owner"]').on('change', e => {
-                        data_process.refreshUI($("#showSingle").val());
-                    });
-                    $('input[name="owner_all"]').on('change', e => {
-                        if ($(this).prop('checked')) {
-                            $('input[name="owner"]').prop('checked', true);
-                        } else {
-                            $('input[name="owner"]').prop('checked', false);
-                            $('input[name="owner"]:lt(3)').prop('checked', true);
-                        }
-                        data_process.refreshUI($("#showSingle").val());
-                    });
+                    // $('input[name="owner"]').on('change', e => {
+                    //     data_process.refreshUI($("#showSingle").val());
+                    // });
+                    // $('input[name="owner_all"]').on('change', e => {
+                    //     if ($(this).prop('checked')) {
+                    //         $('input[name="owner"]').prop('checked', true);
+                    //     } else {
+                    //         $('input[name="owner"]').prop('checked', false);
+                    //         $('input[name="owner"]:lt(3)').prop('checked', true);
+                    //     }
+                    //     data_process.refreshUI($("#showSingle").val());
+                    // });
                 });
 
             };
@@ -759,21 +729,21 @@
                                 return data.user_fb_profile_id == fb_id || fb_id == 'all'
                             }).forEach(data => {
 
-                                    whichClub = data.order_product_items[0].product_title[0];
-                                    var personal_html =  `<a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a>`;
-                                    var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
+                                whichClub = data.order_product_items[0].product_title[0];
+                                var personal_html = `<a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${data.user_fb_profile_id}" target="_blank">${data.user_fb_name}</a>`;
+                                var comment_html = (data.order_comments.length > 0) ? `<a href="https://www.facebook.com/${data.order_comments[0].comment_id}?ipo_no_ext=1" target="_blank">${data.post_snapshot_title}</a>` : data.post_snapshot_title;
 
-                                    var comment_style = ''
-                                    var orderCount = '--';
-                                    var orderCount_fill = '--'
+                                var comment_style = ''
+                                var orderCount = '--';
+                                var orderCount_fill = '--'
 
-                                    data.order_product_items.map(function(e){
-                                     
-                                        orderCount = e.product_style_count;
-                                        orderCount_fill = e.product_style_filled;
-                                        comment_style = e.product_style_title;
+                                data.order_product_items.map(function (e) {
 
-                                        htmlString += `<tr>
+                                    orderCount = e.product_style_count;
+                                    orderCount_fill = e.product_style_filled;
+                                    comment_style = e.product_style_title;
+
+                                    htmlString += `<tr>
                                             <td>${whichClub}</td>
                                             <td>${personal_html}</td>
                                             <td>${comment_html}</td>
@@ -783,17 +753,17 @@
                                             <td>${toCurrency(e.product_sale*orderCount)}</td>
                                             <td>${new Date(data.order_checked_time+' UTC').toLocaleString()}</td>
                                         </tr>`;
-                                    })
+                                })
 
-                                });
-                                if (fb_id != 'all') {
-                                    htmlPersonal  = `<h3>該成員社團為：${whichClub}</h3>
+                            });
+                            if (fb_id != 'all') {
+                                htmlPersonal = `<h3>該成員社團為：${whichClub}</h3>
                                     <a href="https://www.facebook.com/${fb_id}" target="_blank">個人臉書</a>
                                     <a href="https://www.facebook.com/ursmalltwo/inbox/?mailbox_id=102856077945544&selected_item_id=${fb_id}" target="_blank">曉貳訊息</a>
                                     <hr/>`
-                                }
+                            }
 
-                                htmlString = `<html><head><title></title></head>
+                            htmlString = `<html><head><title></title></head>
                                 <body>
                                 ${htmlPersonal}
                                 <table style='font-size:20px;border-spacing:10px;'>
