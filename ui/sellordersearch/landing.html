@@ -1,34 +1,44 @@
-<div id='landingPage' style='display:flex;width:100%;position: fixed;height: 800px;align-items: center;justify-content: center;top: 0px;'>
+<div id='landingPage' style='display:flex;width:100%;position: fixed;justify-content: center;top: 10px;z-index:10000'>
     <div style='z-index: 99;background: #f1f4f5;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;display:flex;'>
-        <div style='vertical-align:top;margin-right:50px;'>
+        <div style='vertical-align:top;margin-right:30px;'>
             <p style="margin-top: 0px;">業績追蹤</p>
             <!-- <div class='day'
                 style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(122, 108, 108);margin-top:10px;'>
                 本日業績</div> -->
-            <div class='month'
-                style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
-                業績(本月)</div>
-            <hr>
-            <div class='any' title="自行操作上面日期，決定後按下"
-                style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
-                業績(自選)</div>
+            <div>
+                <div class='month'
+                    style='width: 60px;height: 40px;text-align: center;line-height: 40px;font-size: 18px;cursor: pointer;border: 1px solid rgb(0,0,0);display:inline-block'>
+                    本月</div>
+                <div class='any' title="自行操作上面日期，決定後按下"
+                    style='width: 60px;height: 40px;text-align: center;line-height: 40px;font-size: 18px;cursor: pointer;border: 1px solid rgb(0,0,0);display:inline-block'>
+                    自選</div>
+            </div>
             
         </div>
-        <div style='vertical-align:top;margin-right:50px;'>
+        <div style='vertical-align:top;margin-right:30px;'>
             <p style="margin-top: 0px;">訂單追蹤</p>
             <!-- <div class='traceThisMonth'
             style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
             訂單追蹤(本月)</div> -->
             <div class='traceLastMonth'
-                style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
-                訂單追蹤(上月)</div>
-            <hr>
+                style='width: 60px;height: 40px;text-align: center;line-height: 40px;font-size: 18px;cursor: pointer;border: 1px solid rgb(0,0,0);display:inline-block;'>
+                上月</div>
             <div class='traceAny'
-                style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
-                訂單追蹤(自選)</div>
+                style='width: 60px;height: 40px;text-align: center;line-height: 40px;font-size: 18px;cursor: pointer;border: 1px solid rgb(0,0,0);display:inline-block;'>
+                自選</div>
             <!-- <div class='traceHistory'
                 style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
                 訂單追蹤(歷史)</div> -->
+        </div>
+        <div style='vertical-align:top;margin-right:30px;'>
+            <p style="margin-top: 0px;">庫存管理</p>
+            <!-- <div class='traceThisMonth'
+            style='width: 150px;height: 50px;text-align: center;line-height: 50px;font-size: 20px;cursor: pointer;border: 1px solid rgb(0,0,0);margin-top:10px;'>
+            訂單追蹤(本月)</div> -->
+            <div class='stockCheck'
+                style='width: 120px;height: 40px;text-align: center;line-height: 40px;font-size: 18px;cursor: pointer;border: 1px solid rgb(0,0,0);'>
+                統計數據</div>
+            <hr>
         </div>
         <div style='vertical-align:top;display:none;margin-right:50px;'>
             <p style="margin-top: 0px;">關鍵指標追蹤</p>
@@ -39,6 +49,10 @@
             <div id="vue_progressbar" style='margin-top: 20px;' v-if='isShow'>
                 <p>資料取得進度</p>
                 <vue-simple-progress size="large" :val="percentValue" :text="percentValue + '%'"></vue-simple-progress>
+            </div>
+            <div id='google_auth'>
+                <button class="auth" style="display: none;">Authorize</button>
+                <button class="signout" style="display: none;">Sign Out</button>
             </div>
         </div>
     </div>
