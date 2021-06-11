@@ -56,9 +56,28 @@
             <div id='hot_item_container'></div>
         </div>
         <div class="tab-pane" id="pills-report" role="tabpanel">
-            記得勾選全部<br />
             選擇日期為回報當天、並累積至當日<br /><br /><br />
-            <textarea id='reportDiv' style='width:300px;height:250px'></textarea>
+            <textarea id='reportDiv' style='width:300px;height:250px;display: inline-block;'></textarea>
+            <div style="width:500px;height:250px;display: inline-block;overflow: auto;">
+                <table id='ProfileTable' style="padding:10px;">
+                    <tr>
+                        <td>累積營業額</td>
+                        <td class="total_sale"></td>
+                        <td>營運花費(Admin)</td>
+                        <td class="total_cost_admin"></td>
+                    </tr>
+                    <tr>
+                        <td>累積營業額(一般+VIP)</td>
+                        <td class="total_sale_novvip"></td>
+                        <td>累積利潤(一般+VIP)</td>
+                        <td class="total_profit_novvip"></td>
+                    </tr>
+                    <tr>
+                        <td>下單數</td>
+                        <td class="total_order_count"></td>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>
 </div>
