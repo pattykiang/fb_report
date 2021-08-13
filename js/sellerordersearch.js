@@ -718,45 +718,45 @@ var sellerordersearch = function () {
         }
         var _init_stock = function (mode, startDate, endDate) {
             function createTraceOrder(data) {
-              
+
                 function getClassifyByItem(arr) {
                     var store_sale = [];
-                    
+
                     //每張訂單
                     arr.forEach(data => {
-                            //每樣商品
-                            data.order_product_items.forEach(order=>{
-                                //商品+規格才是唯一
-                                var _itemIndex = store_sale.map(function (e) {
-                                    return e.product_title+'-'+e.product_style_title;
-                                }).indexOf(order.product_title+'-'+order.product_style_title);
+                        //每樣商品
+                        data.order_product_items.forEach(order => {
+                            //商品+規格才是唯一
+                            var _itemIndex = store_sale.map(function (e) {
+                                return e.product_title + '-' + e.product_style_title;
+                            }).indexOf(order.product_title + '-' + order.product_style_title);
 
 
-                                if (_itemIndex >= 0) {
-                                    //跑所有order_product_items
-                                    store_sale[_itemIndex].order_product_items = 
+                            if (_itemIndex >= 0) {
+                                //跑所有order_product_items
+                                store_sale[_itemIndex].order_product_items =
                                     store_sale[_itemIndex].order_product_items.concat(order);
-                                    store_sale[_itemIndex].product_style_count +=  order.product_style_count;
-                                    store_sale[_itemIndex].product_style_filled += order.product_style_filled;
-                                    store_sale[_itemIndex].product_style_shipout += order.product_style_shipout;
-                                    store_sale[_itemIndex].product_style_out += order.product_style_out;
-    
-                                    // store_sale[_itemIndex].sum += data.order_total_price * 1;
-                                    // store_sale[_itemIndex].count += 1;
-                                } else {
-                                    store_sale.push({
-                                        product_title: order.product_title,
-                                        product_style_title: order.product_style_title,
-                                        post_snapshot_id: data.post_snapshot_id,
-                                        order_product_items: [].concat(order),
-                                        product_style_count: order.product_style_count,
-                                        product_style_filled: order.product_style_filled,
-                                        product_style_shipout: order.product_style_shipout,
-                                        product_style_out: order.product_style_out
-                                    });
-                                }
-                            })
-                        });
+                                store_sale[_itemIndex].product_style_count += order.product_style_count;
+                                store_sale[_itemIndex].product_style_filled += order.product_style_filled;
+                                store_sale[_itemIndex].product_style_shipout += order.product_style_shipout;
+                                store_sale[_itemIndex].product_style_out += order.product_style_out;
+
+                                // store_sale[_itemIndex].sum += data.order_total_price * 1;
+                                // store_sale[_itemIndex].count += 1;
+                            } else {
+                                store_sale.push({
+                                    product_title: order.product_title,
+                                    product_style_title: order.product_style_title,
+                                    post_snapshot_id: data.post_snapshot_id,
+                                    order_product_items: [].concat(order),
+                                    product_style_count: order.product_style_count,
+                                    product_style_filled: order.product_style_filled,
+                                    product_style_shipout: order.product_style_shipout,
+                                    product_style_out: order.product_style_out
+                                });
+                            }
+                        })
+                    });
 
                     return store_sale;
                 }
@@ -770,7 +770,9 @@ var sellerordersearch = function () {
 
             var data = createTraceOrder(extendData.order_data, startDate, endDate, 'addItem');
 
-            function makeApiCall(data) {
+            function makeApiCall(data, groupInfoList) {
+
+                var googleSyncData = [];
 
                 //抓商品資料
                 var ipusone_production_item = {};
@@ -788,9 +790,9 @@ var sellerordersearch = function () {
                             var _no = (_row[2]) ? _row[2] : '';
                             var _need_order = (_row[4]) ? _row[4] : '';
 
-                            ipusone_production_item[_row[0]+'-'+_style] = {
-                                order:_row[0],
-                                product_style:_style,
+                            ipusone_production_item[_row[0] + '-' + _style] = {
+                                order: _row[0],
+                                product_style: _style,
                                 product_vendor: _vendor,
                                 product_no: _no,
                                 need_order: _need_order
@@ -798,28 +800,27 @@ var sellerordersearch = function () {
                         }
                     }
                     //比對vendoer/no
-                    var googleSyncData = [];
                     data
-                    .sort((a,b) => (a.post_snapshot_id > b.post_snapshot_id) ? -1 : ((b.post_snapshot_id > a.post_snapshot_id) ? 1 : 0))
-                    .map(e => {
-                        var _style = '';
-                        var item = ipusone_production_item[e.product_title+'-'+e.product_style_title];
-                        _product_vendor = (item) ? item.product_vendor : '';;
-                        _product_no = (item) ? item.product_no : '';
-                        _need_order = (item) ? item.need_order : '';
+                        .sort((a, b) => (a.post_snapshot_id > b.post_snapshot_id) ? -1 : ((b.post_snapshot_id > a.post_snapshot_id) ? 1 : 0))
+                        .map(e => {
+                            var _style = '';
+                            var item = ipusone_production_item[e.product_title + '-' + e.product_style_title];
+                            _product_vendor = (item) ? item.product_vendor : '';;
+                            _product_no = (item) ? item.product_no : '';
+                            _need_order = (item) ? item.need_order : '';
 
-                        googleSyncData.push([
-                            e.product_title,
-                            e.product_style_title,
-                            e.product_style_count,
-                            _need_order,
-                            e.product_style_filled,
-                            e.product_style_shipout,
-                            _product_vendor,
-                            _product_no
+                            googleSyncData.push([
+                                e.product_title,
+                                e.product_style_title,
+                                e.product_style_count,
+                                _need_order,
+                                e.product_style_filled,
+                                e.product_style_shipout,
+                                _product_vendor,
+                                _product_no
 
-                        ]);
-                    })
+                            ]);
+                        })
                     //分類各Group 採購數量
                     var googleSyncData_Group = [];
                     data.map(e => {
@@ -846,11 +847,11 @@ var sellerordersearch = function () {
                             _countVVIP,
                             _countVIP,
                             _count,
-                            e.product_style_count
+                            (e.product_style_count - _countVVIP)
                         ]);
                     })
 
-                    //更新資料 iplusonego_sync
+                    //更新資料 sync_iplusonego
                     gapi.client.sheets.spreadsheets.values.update({
                         spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
                         range: 'SYNC_iplusonego!A2:H',
@@ -905,12 +906,91 @@ var sellerordersearch = function () {
                     }, function (reason) {
                         console.error('error: ' + reason.result.error.message);
                     });
+
+
+                    var his_order = [];
+                    extendData.ajaxObject.stockAnytime.map(order => {
+
+                        order.order_product_items.map(item => {
+                            var _group = '';
+                            if (item.product_is_vvip == 0 && item.product_is_vip == 0) {
+                                _group = 'Normal';
+                            } else if (item.product_is_vip == 1) {
+                                _group = 'VIP';
+                            } else if (item.product_is_vvip == 1) {
+                                _group = "VVIP";
+                            }
+                            var _month = '';
+
+                            var orderDate = new Date(order.order_checked_time + ' UTC');
+                            groupInfoList.map(item => {
+                                var startDate = new Date(item[0]);
+                                var endDate = new Date(item[1]);
+
+                                if (orderDate > startDate && orderDate <= endDate) {
+                                    _month = item[2];
+                                }
+                            })
+                            var _day = orderDate.getDay();
+                            if (_day == 0) {
+                                _day = 7
+                            };
+                            var _vendor = googleSyncData.filter(vendor => {
+                                var _returnValue = '';
+                                if (vendor[0] == item.product_title && vendor[1] == item.product_style_title) {
+                                    _returnValue = vendor;
+                                }
+                                return _returnValue
+                            });
+                            if(_vendor.length==1){
+                                _vendor = _vendor[0];
+                            }
+                            his_order.push([
+                                order.order_id,
+                                order.user_fb_name,
+                                item.product_title,
+                                item.product_style_title,
+                                item.product_style_count,
+                                item.product_sale,
+                                item.product_style_count * item.product_sale,
+                                _group,
+                                _month,
+                                orderDate.toLocaleDateString(),
+                                _day,
+                                orderDate.toLocaleString(),
+                                orderDate.getHours(),
+                                _vendor[6]
+                            ])
+                        })
+                    })
+                    //更新資料 sync_iplusonego
+                    gapi.client.sheets.spreadsheets.values.update({
+                        spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
+                        range: 'SYNC_歷史訂單!A2:N',
+                        valueInputOption: 'USER_ENTERED',
+                    }, {
+                        "values": his_order
+                    }).then(function (response) {
+                        alert('已更新「歷史訂單」')
+                        console.log(response.result);
+                    }, function (reason) {
+                        console.error('error: ' + reason.result.error.message);
+                    });
                 });
 
 
             };
-            makeApiCall(data.data_item);
-            //UIControl.initStock(mode, data.data_item);
+            //抓開團資訊
+            gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
+                range: '營運狀況!A3:C100',
+            }).then(function (response) {
+                var groupInfoList = response.result.values.filter(item => {
+                    return item[0]
+                });
+                makeApiCall(data.data_item, groupInfoList);
+            });
+
         }
         return {
             init: _init,
@@ -1165,113 +1245,6 @@ var sellerordersearch = function () {
             };
             switchView(viewList[0]);
         };
-        var _init_stock = function (mode, dataList) {
-            $.ajax({
-                url: extendData.rawUrl + '/ui/sellordersearch/stock/index.html',
-                async: false,
-                cache: false
-            }).then(function (data) {
-                if ($('#adv').length == 0) {
-
-                    $('body').append(data);
-                }
-                var htmlString = '';
-                var googleSyncInfo = [];
-                dataList.map(data => {
-                    htmlString += `<tr><td>${data.post_snapshot_title}</td><td>${data.product_style_count}</td><td>${data.product_style_filled}</td><td>${data.product_style_shipout}</td><td>${data.product_style_out}</td></tr>`;
-
-                    googleSyncInfo.push([
-                        data.post_snapshot_title,
-                        data.product_style_count,
-                        data.product_style_filled,
-                        data.product_style_shipout,
-                        data.product_style_out
-                    ]);
-                })
-                $('#adv table').append(htmlString);
-
-                // $("tr td:nth-child(2)").css({
-                //     'text-align': 'right',
-                //     'width': '80px'
-                // });
-                // $("tr td:nth-child(3)").css({
-                //     'text-align': 'right',
-                //     'width': '90px'
-                // });
-                // $("tr td:nth-child(4)").css({
-                //     'text-align': 'right',
-                //     'width': '80px'
-                // });
-                // $("tr td:nth-child(5)").css({
-                //     'text-align': 'right',
-                //     'width': '80px'
-                // });
-                $('tr').css('border-bottom', '1px solid black');
-                $('td a').css('cursor', 'pointer');
-
-                //Close
-                $('#adv .btnBack').on('click', e => {
-                    $('#adv').remove();
-                    $('#landingPage').show();
-                });
-                // $('#adv input').css({
-                //     'margin-left': '5px'
-                // });
-                // $('.tab-pane div').css({
-                //     'left': '50px',
-                //     'right': '50px'
-                // });
-
-                // $("#showSingle").val($('#searchDateE').val());
-                // $
-                //     ("#showSingle").datepicker({
-                //         format: 'yyyy-mm-dd',
-                //     }).on('changeDate', e => {
-                //         data_process.refreshUI($("#showSingle").val());
-                //     });
-                // $('#adv a[data-toggle="pill"]').on('shown.bs.tab', e => {
-                //     data_process.refreshUI($("#showSingle").val());
-                // })
-                // $('#adv .btnBack').on('click', e => {
-                //     $('#adv').remove();
-                //     $('#landingPage').show();
-                // });
-
-                function makeApiCall(passValueArray) {
-                    //更新資料
-                    var params = {
-                        spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
-                        range: 'iplusonego_sync!B2:F150',
-                        valueInputOption: 'RAW',
-                    };
-
-                    var valueRangeBody = {
-                        "values": passValueArray
-                    };
-
-                    var request = gapi.client.sheets.spreadsheets.values.update(params, valueRangeBody);
-                    request.then(function (response) {
-                        console.log(response.result);
-                    }, function (reason) {
-                        console.error('error: ' + reason.result.error.message);
-                    });
-                    //更新時間
-                    params.range = 'iplusonego_sync!H1:H1';
-                    var request2 = gapi.client.sheets.spreadsheets.values.update(params, {
-                        "values": [
-                            [(new Date).toLocaleDateString() + " " + (new Date).toLocaleTimeString().slice(2, 7)]
-                        ]
-                    });
-                    request2.then(function (response) {
-                        console.log(response.result);
-                    }, function (reason) {
-                        console.error('error: ' + reason.result.error.message);
-                    });
-
-                };
-                makeApiCall(googleSyncInfo);
-            });
-        }
         var _showSingleDay = function (dateString, storeOwnerList, store_sale, store_order, store_uu) {
             Highcharts.chart('day_container', {
                 chart: {
@@ -1537,7 +1510,6 @@ var sellerordersearch = function () {
         return {
             init: _init,
             initTrace: _init_trace,
-            initStock: _init_stock,
             changSelectDay: _showSingleDay,
             showSelectDayPerHour: _showPerHour,
             showSelectPerDay: _showPerDay,

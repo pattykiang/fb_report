@@ -1,0 +1,25 @@
+<div id='adv'
+    style='top: 130px;left: 50px;height: 500px;right: 50px;position: fixed;z-index: 99;background: #f1f4f5;padding: 10px;overflow-y:auto;border: 10px solid rgba(0,0,0,0.5);border-radius: 10px;background-clip: padding-box;'>
+    <button class='btnBack' style='right: 80px;position: fixed;'>回主選單</button>
+    <ul class="nav">
+        <li class="nav-item">
+            <a class="nav-link active" name='_showSingleDay' data-toggle="pill" href="#pills-additem"
+                role="tab">待納入商品</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" name='_showPerHour' data-toggle="pill" href="#pills-updateprice" role="tab">待更新價格</a>
+        </li>
+    </ul>
+    <div class="tab-content" style='margin-top:10px;'>
+        <div class="tab-pane  show active" id="pills-additem" role="tabpanel">
+            <div id='div_additem'>
+                <table></table>
+            </div>
+        </div>
+        <div class="tab-pane" id="pills-updateprice" role="tabpanel">
+            <div id='div_updateprice'>
+                <table></table>
+            </div>
+        </div>
+    </div>
+</div>
