@@ -822,34 +822,34 @@ var sellerordersearch = function () {
                             ]);
                         })
                     //分類各Group 採購數量
-                    var googleSyncData_Group = [];
-                    data.map(e => {
+                    // var googleSyncData_Group = [];
+                    // data.map(e => {
 
-                        var _countVIP = e.order_product_items.filter(e => {
-                            return e.product_is_vip == 1
-                        }).reduce(function (acc, obj) {
-                            return acc + obj.product_style_count;
-                        }, 0);
-                        var _countVVIP = e.order_product_items.filter(e => {
-                            return e.product_is_vvip == 1
-                        }).reduce(function (acc, obj) {
-                            return acc + obj.product_style_count;
-                        }, 0);
-                        var _count = e.order_product_items.filter(e => {
-                            return (e.product_is_vvip == 0 && e.product_is_vip == 0)
-                        }).reduce(function (acc, obj) {
-                            return acc + obj.product_style_count;
-                        }, 0);
+                    //     var _countVIP = e.order_product_items.filter(e => {
+                    //         return e.product_is_vip == 1
+                    //     }).reduce(function (acc, obj) {
+                    //         return acc + obj.product_style_count;
+                    //     }, 0);
+                    //     var _countVVIP = e.order_product_items.filter(e => {
+                    //         return e.product_is_vvip == 1
+                    //     }).reduce(function (acc, obj) {
+                    //         return acc + obj.product_style_count;
+                    //     }, 0);
+                    //     var _count = e.order_product_items.filter(e => {
+                    //         return (e.product_is_vvip == 0 && e.product_is_vip == 0)
+                    //     }).reduce(function (acc, obj) {
+                    //         return acc + obj.product_style_count;
+                    //     }, 0);
 
-                        googleSyncData_Group.push([
-                            e.product_title,
-                            e.product_style_title,
-                            _countVVIP,
-                            _countVIP,
-                            _count,
-                            (e.product_style_count - _countVVIP)
-                        ]);
-                    })
+                    //     googleSyncData_Group.push([
+                    //         e.product_title,
+                    //         e.product_style_title,
+                    //         _countVVIP,
+                    //         _countVIP,
+                    //         _count,
+                    //         (e.product_style_count - _countVVIP)
+                    //     ]);
+                    // })
 
                     //更新資料 sync_iplusonego
                     gapi.client.sheets.spreadsheets.values.update({
@@ -873,24 +873,24 @@ var sellerordersearch = function () {
                             [(new Date).toLocaleDateString() + " " + (new Date).toLocaleTimeString()]
                         ]
                     }).then(function (response) {
-                        alert('已更新「訂貨管理表單：iplusonego_sync」')
+                        //alert('已更新「訂貨管理表單：iplusonego_sync」')
                         console.log(response.result);
                     }, function (reason) {
                         console.error('error: ' + reason.result.error.message);
                     });
 
                     //更新資料 商品購買分組統計
-                    gapi.client.sheets.spreadsheets.values.update(params = {
-                        spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
-                        valueInputOption: 'RAW',
-                        range: 'SYNC_商品購買分組統計!A2:F',
-                    }, {
-                        "values": googleSyncData_Group
-                    }).then(function (response) {
-                        console.log(response.result);
-                    }, function (reason) {
-                        console.error('error: ' + reason.result.error.message);
-                    });
+                    // gapi.client.sheets.spreadsheets.values.update(params = {
+                    //     spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
+                    //     valueInputOption: 'RAW',
+                    //     range: 'SYNC_商品購買分組統計!A2:F',
+                    // }, {
+                    //     "values": googleSyncData_Group
+                    // }).then(function (response) {
+                    //     console.log(response.result);
+                    // }, function (reason) {
+                    //     console.error('error: ' + reason.result.error.message);
+                    // });
 
                     gapi.client.sheets.spreadsheets.values.update({
                         spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
@@ -901,7 +901,7 @@ var sellerordersearch = function () {
                             [(new Date).toLocaleDateString() + " " + (new Date).toLocaleTimeString()]
                         ]
                     }).then(function (response) {
-                        alert('已更新「訂貨管理表單：商品購買分組統計」')
+                        //alert('已更新「訂貨管理表單：商品購買分組統計」')
                         console.log(response.result);
                     }, function (reason) {
                         console.error('error: ' + reason.result.error.message);

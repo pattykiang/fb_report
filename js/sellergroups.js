@@ -1,5 +1,6 @@
 var sellergroupscontainer = function () {
     var gapiIsLoading = false;
+    var googleSheetData = {};
     var _loadingScript = function () {
         $.getScript('https://apis.google.com/js/api.js', e => {
 
@@ -26,6 +27,14 @@ var sellergroupscontainer = function () {
                     });
                     gapiIsLoading = true;
                     // signoutButton.onclick = handleSignoutClick;
+
+                    gapi.client.sheets.spreadsheets.values.get({
+                        spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
+                        range: '報表_商品成本!A2:F',
+                    }).then(function (response) {
+                        googleSheetData.response = response;
+                        alert('已取得商品成本資料');
+                    })
                 }, function (error) {
                     function appendPre(message) {
                         var pre = document.getElementById('content');
@@ -58,7 +67,7 @@ var sellergroupscontainer = function () {
 
 
         });
-
+        
     }();
     var _init = function (preload, mode) {
         // if (extendData.ajaxObject[mode] && !extendData.isForceReload) {
@@ -67,11 +76,13 @@ var sellergroupscontainer = function () {
         //     return
         // }
         var allProduct = preload;
+
         var checkFunction = function () {
             var allProductInPlus = {};
 
             $(document).off('ajaxSend');
             //整理下載資料
+            console.log('request data')
             allProduct.map(e => {
                 $.ajax({
                     type: "GET",
@@ -96,94 +107,97 @@ var sellergroupscontainer = function () {
                     })
                 });
             });
+            console.log('request data finished')
             //下載資料
             var allProductInSheet = [];
 
             function getSheetData() {
-                gapi.client.sheets.spreadsheets.values.get({
-                    spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
-                    range: '報表_商品成本!A2:F',
-                }).then(function (response) {
-                    var range = response.result;
-                    if (range.values.length > 0) {
-                        for (i = 0; i < range.values.length; i++) {
-                            var _row = range.values[i];
-                            var _title = (_row[0]) ? _row[0] : '';
-                            var _style = (_row[1]) ? _row[1] : '';
-                            var _price_orig = (_row[2]) ? Number(_row[2]) : '';
-                            var _price_vvip = (_row[3]) ? Number(_row[3]) : '';
-                            var _price_vip = (_row[4]) ? Number(_row[4]) : '';
-                            var _price_sale = (_row[5]) ? Number(_row[5]) : '';
+                // gapi.client.sheets.spreadsheets.values.get({
+                //     spreadsheetId: '1d9MaRQAtqZvSYDaDgD9ct99Ij7GLtUwF2aY3ncOFtO4',
+                //     range: '報表_商品成本!A2:F',
+                // }).then(function (response) {
+                var response = googleSheetData.response;
+                var range = response.result;
+                if (range.values.length > 0) {
+                    for (i = 0; i < range.values.length; i++) {
+                        var _row = range.values[i];
+                        var _title = (_row[0]) ? _row[0] : '';
+                        var _style = (_row[1]) ? _row[1] : '';
+                        var _price_orig = (_row[2]) ? Number(_row[2]) : '';
+                        var _price_vvip = (_row[3]) ? Number(_row[3]) : '';
+                        var _price_vip = (_row[4]) ? Number(_row[4]) : '';
+                        var _price_sale = (_row[5]) ? Number(_row[5]) : '';
 
-                            var obj = {
-                                product_title: _title,
-                                product_stlye: _style,
-                                price_vvip: _price_vvip,
-                                price_vip: _price_vip,
-                                price_sale: _price_sale,
-                                price_orig: _price_orig
-                            };
+                        var obj = {
+                            product_title: _title,
+                            product_stlye: _style,
+                            price_vvip: _price_vvip,
+                            price_vip: _price_vip,
+                            price_sale: _price_sale,
+                            price_orig: _price_orig
+                        };
 
-                            allProductInSheet.push(obj);
-                        }
+                        allProductInSheet.push(obj);
                     }
-                    //比對資料
-                    // console.log('allProductInIPlus', allProductInPlus);
-                    // console.log('allProductInSheet', allProductInSheet);
-                    var classifyProduct = {
-                        diffPriceProduct: [],
-                        oldProduct: [],
-                        sameProduct: [],
-                        updateProduct: [],
-                        updateProductLastRow: 0
-                    };
-                    classifyProduct.updateProductLastRow = range.values.length + 2;
+                }
+                //比對資料
+                // console.log('allProductInIPlus', allProductInPlus);
+                // console.log('allProductInSheet', allProductInSheet);
+                var classifyProduct = {
+                    diffPriceProduct: [],
+                    oldProduct: [],
+                    sameProduct: [],
+                    updateProduct: [],
+                    updateProductLastRow: 0
+                };
+                classifyProduct.updateProductLastRow = range.values.length + 2;
 
-                    allProductInSheet.map(e => {
-                        //找與系統差異動，顯示。待更新系統
-                        //allProductInIPlus.map(systemItem => {
-                        var product_key = e.product_title + '-' + e.product_stlye;
-                        var objProductInPlus = allProductInPlus[product_key];
-                        if (objProductInPlus) {
+                allProductInSheet.map(e => {
+                    //找與系統差異動，顯示。待更新系統
+                    //allProductInIPlus.map(systemItem => {
+                    var product_key = e.product_title + '-' + e.product_stlye;
+                    var objProductInPlus = allProductInPlus[product_key];
+                    if (objProductInPlus) {
 
-                            if (e.price_orig == objProductInPlus.price_orig &&
-                                e.price_sale == objProductInPlus.price_sale &&
-                                e.price_vip == objProductInPlus.price_vip &&
-                                e.price_vvip == objProductInPlus.price_vvip) {
-                                //完全一致
-                                classifyProduct.sameProduct.push(objProductInPlus);
-                            } else {
-                                //商品價格不一致
-                                objProductInPlus['sheet_price_orig'] = e.price_orig;
-                                objProductInPlus['sheet_price_sale'] = e.price_sale;
-                                objProductInPlus['sheet_price_vip'] = e.price_vip;
-                                objProductInPlus['sheet_price_vvip'] = e.price_vvip;
-                                classifyProduct.diffPriceProduct.push(objProductInPlus);
-                            }
+                        if (e.price_orig == objProductInPlus.price_orig &&
+                            e.price_sale == objProductInPlus.price_sale &&
+                            e.price_vip == objProductInPlus.price_vip &&
+                            e.price_vvip == objProductInPlus.price_vvip) {
+                            //完全一致
+                            classifyProduct.sameProduct.push(objProductInPlus);
                         } else {
-                            //舊商品
-                            classifyProduct.oldProduct.push(product_key);
+                            //商品價格不一致
+                            objProductInPlus['sheet_price_orig'] = e.price_orig;
+                            objProductInPlus['sheet_price_sale'] = e.price_sale;
+                            objProductInPlus['sheet_price_vip'] = e.price_vip;
+                            objProductInPlus['sheet_price_vvip'] = e.price_vvip;
+                            classifyProduct.diffPriceProduct.push(objProductInPlus);
                         }
-                        //分類完就刪除
-                        delete allProductInPlus[product_key];
-                    })
-                    //剩餘的就是要插入的
-                    var keys = Object.keys(allProductInPlus);
-                    keys.map(key => {
-                        classifyProduct.updateProduct.push(allProductInPlus[key]);
-                    })
-                    classifyProduct.updateProduct.reverse();
-                    //顯示差異資料，手動更新
-                    _initToUI(classifyProduct);
-                });
+                    } else {
+                        //舊商品
+                        classifyProduct.oldProduct.push(product_key);
+                    }
+                    //分類完就刪除
+                    delete allProductInPlus[product_key];
+                })
+                //剩餘的就是要插入的
+                var keys = Object.keys(allProductInPlus);
+                keys.map(key => {
+                    classifyProduct.updateProduct.push(allProductInPlus[key]);
+                })
+                classifyProduct.updateProduct.reverse();
+                //顯示差異資料，手動更新
+                console.log(classifyProduct);
+                _initToUI(classifyProduct);
+                // });
 
                 $('#landingPage').hide();
             }
-            if (gapiIsLoading) {
-                getSheetData();
-            } else {
-                setTimeout(getSheetData, 1500)
-            }
+            // if (gapiIsLoading) {
+            getSheetData();
+            // } else {
+            //     setTimeout(getSheetData, 1500)
+            // }
         }
         $(document).on('ajaxSend', function (t, e, setting) {
 
@@ -191,7 +205,6 @@ var sellergroupscontainer = function () {
                 e.done(function (t) {
 
                     var isPass = (!t.nextPage) ? true : false;
-
                     allProduct = allProduct.concat(t.data);
 
                     if (isPass) {
@@ -209,12 +222,13 @@ var sellergroupscontainer = function () {
         } else {
             $("html, body").animate({
                 scrollTop: $(document).height()
-            }, 1)
+            }, 1);
+            checkFunction();
         }
     }
     var _initToUI = function (classifyProduct) {
         $.ajax({
-            url: extendData.rawUrl + '/ui/sellergroups/price_list.html',
+            url: extendData.rawUrl + 'ui/sellergroups/price_list.html',
             async: false,
             cache: false
         }).then(function (data) {
@@ -256,7 +270,6 @@ var sellergroupscontainer = function () {
             $('#div_additem table').html(htmlString);
 
             //匯入Sheet
-            
             var post_data = [];
             classifyProduct.updateProduct.map(product => {
                 // <td><a href="${product.link}" target="_blank">${product.product_title}</td>
